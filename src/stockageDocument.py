@@ -15,7 +15,7 @@ class StockageDocument:
         self.cheminDossierDocument = os.path.join(self.cheminRacine, "document")
         self.url = "http://data.assemblee-nationale.fr/static/openData/repository/17/loi/dossiers_legislatifs/Dossiers_Legislatifs.json.zip"
     
-    def recupererDocumentStocké(self):
+    def recuperer_document_stocké(self):
           dossier = Path(self.cheminDossierDocument)
 
           if not dossier.exists():
@@ -36,7 +36,7 @@ class StockageDocument:
             logging.error("Erreur lors de la lecture du document legislatif : %s", e, exc_info=True)
             raise LectureException("Impossible de lire le document legislatif stocké") from e
     
-    def mettreAJourStockDocuments(self):
+    def mettre_a_jour_stock_documents(self):
         try:
             dossierZip = os.path.basename(self.cheminZipTemporaire)
             self.telechargerDonnees(self.url, self.cheminZipTemporaire)
