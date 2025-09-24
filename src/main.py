@@ -2,16 +2,16 @@ from fastapi import FastAPI, status, Query
 from fastapi.responses import ORJSONResponse, JSONResponse
 
 from src.documentLegislatifReponse import DocumentLegislatifReponse
-from src.deputeEnExerciceReponse import DeputeEnExerciceReponse
+from src.acteurReponse import ActeurReponse
 from src.metier.documentLegislatif.objet.documentLegislatif import DocumentLegislatif
-from src.metier.deputeEnExercice.objet.deputeEnExercice import DeputeEnExercice
+from src.metier.acteur.objet.acteur import Acteur
 from src.metier.documentLegislatif.traitementDocumentLegislatif import TraitementDocument
-from src.metier.deputeEnExercice.traitementDeputeEnExercice import TraitementDeputeEnExercice
-from src.metier.applicationExceptions import DocumentLegislatifIntrouvableException, DeputeEnExerciceIntrouvableException
+from src.metier.acteur.traitementActeur import TraitementActeur
+from src.metier.applicationExceptions import DocumentLegislatifIntrouvableException, ActeurIntrouvableException
 from src.infra.infrastructureException import TelechargementException, LectureException
 
 traitementDocument = TraitementDocument()
-traitementActeur = TraitementDeputeEnExercice()
+traitementActeur = TraitementActeur()
 
 app = FastAPI(default_response_class=ORJSONResponse)
 
@@ -37,28 +37,28 @@ def retournerDocumentLegislatif():
 # --- Acteurs
 
 @app.get(
-    "/v1/deputes-en-exercice/raw",
-    response_model=DeputeEnExercice,
+    "/v1/acteurs/raw",
+    response_model=Acteur,
     status_code=status.HTTP_200_OK
 )
-def retournerDeputeEnExerciceBrut(uid: str | None = Query(default=None, description="uid acteur (ex: PA722190)")):
+def retournerActeurBrut(uid: str | None = Query(default=None, description="uid acteur (ex: PA722190)")):
     return traitementActeur.recuperer_acteur(uid)
 
 @app.get(
-    "/v1/deputes-en-exercice",
-    response_model=DeputeEnExerciceReponse,
+    "/v1/acteurs",
+    response_model=ActeurReponse,
     status_code=status.HTTP_200_OK,
 )
 def retournerDeputeEnExercice(uid: str | None = Query(default=None, description="uid acteur (ex: PA722190)")):
     acteur = traitementActeur.recuperer_acteur(uid)
     uid_text = None
-    if getattr(acteur, "acteur", None) and getattr(acteur.acteur, "uid", None):
-        uid_text = acteur.acteur.uid.text
+    if getattr(acteur, "acteur", None) and getattr(acteur, "uid", None):
+        uid_text = acteur.uid.text
 
-    return DeputeEnExerciceReponse(
+    return ActeurReponse(
         uid=uid_text,
-        etatCivil=acteur.acteur.etatCivil if acteur.acteur else None,
-        profession=acteur.acteur.profession if acteur.acteur else None,
+        etatCivil=acteur.etatCivil if acteur else None,
+        profession=acteur.profession if acteur else None,
     )
 
 # --- Exceptions Handlers
@@ -74,8 +74,8 @@ def _json_error(message: str, status_code: int):
 def not_found_handler(_, exc: DocumentLegislatifIntrouvableException):
     return _json_error(str(exc), status.HTTP_404_NOT_FOUND)
 
-@app.exception_handler(DeputeEnExerciceIntrouvableException)
-def acteur_not_found_handler(_, exc: DeputeEnExerciceIntrouvableException):
+@app.exception_handler(ActeurIntrouvableException)
+def acteur_not_found_handler(_, exc: ActeurIntrouvableException):
     return _json_error(str(exc), status.HTTP_404_NOT_FOUND)
 
 @app.exception_handler(TelechargementException)
