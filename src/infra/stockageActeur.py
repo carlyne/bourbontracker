@@ -10,7 +10,7 @@ from src.infra.infrastructureException import TelechargementException, LectureEx
 
 class StockageActeur:
     def __init__(self):
-        self.chemin_racine = os.path.abspath("docs/acteur")
+        self.chemin_racine = os.path.abspath("docs")
         os.makedirs(self.chemin_racine, exist_ok=True)
         self.chemin_zip_temporaire = os.path.join(self.chemin_racine, "acteurs.zip")
         self.chemin_dossier_acteur = os.path.join(self.chemin_racine, "acteur")

@@ -51,14 +51,12 @@ def retournerActeurBrut(uid: str | None = Query(default=None, description="uid a
 )
 def retournerDeputeEnExercice(uid: str | None = Query(default=None, description="uid acteur (ex: PA722190)")):
     acteur = traitementActeur.recuperer_acteur(uid)
-    uid_text = None
-    if getattr(acteur, "acteur", None) and getattr(acteur, "uid", None):
-        uid_text = acteur.uid.text
+    uid_text = acteur.uid.text if (acteur and acteur.uid and acteur.uid.text) else None
 
     return ActeurReponse(
         uid=uid_text,
-        etatCivil=acteur.etatCivil if acteur else None,
-        profession=acteur.profession if acteur else None,
+        etatCivil=acteur.etatCivil,
+        profession=acteur.profession,
     )
 
 # --- Exceptions Handlers

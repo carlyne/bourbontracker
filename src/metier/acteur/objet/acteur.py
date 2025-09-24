@@ -219,6 +219,9 @@ def parse_acteur(payload: dict | str) -> Acteur:
     root = loads(payload) if isinstance(payload, str) else payload
     if "acteur" not in root:
         raise ValueError("Clé 'acteur' absente du JSON")
-    root = _normalize_xmlish(root)  
-    return Acteur.model_validate(root)
+    data = root["acteur"]
+    data = _normalize_xmlish(data)
+    
+    return Acteur.model_validate(data)
+
 
