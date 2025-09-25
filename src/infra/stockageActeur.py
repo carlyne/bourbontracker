@@ -1,12 +1,12 @@
 import shutil
 import zipfile
 import requests
-import logging
 import os
 import json
+import logging
 from pathlib import Path
 
-from src.infra.infrastructureException import TelechargementException, LectureException
+from src.infra.infrastructureException import TelechargementException
 
 class StockageActeur:
     def __init__(self):
@@ -26,6 +26,18 @@ class StockageActeur:
         except Exception as e:
             logging.error("Erreur lors du traitement du ZIP acteurs : %s", e, exc_info=True)
             raise TelechargementException("Impossible de traiter le ZIP des acteurs") from e
+        
+    def lire_acteur_par_ref(self, acteur_ref: str) -> dict | None:
+        p = Path(self.chemin_dossier_acteur) / f"{acteur_ref}.json"
+        if not p.is_file():
+            logging.warning("Fichier acteur introuvable: %s", p)
+            return None
+        try:
+            with p.open("r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception as e:
+            logging.exception("Impossible de lire le JSON acteur %s: %s", p, e)
+            return None
 
     def _telecharger_fichiers(self, url, dest):
         logging.info("Téléchargement ZIP acteurs -> %s", dest)
@@ -46,39 +58,4 @@ class StockageActeur:
                     os.makedirs(os.path.dirname(dest), exist_ok=True)
                     with zf.open(name) as src, open(dest, "wb") as out:
                         shutil.copyfileobj(src, out)
-
-    def recuperer_acteur_depuis_uid(self, uid: str | None = None) -> tuple[dict, str]:
-        dossier = Path(self.chemin_dossier_acteur)
-
-        if not dossier.exists():
-            raise LectureException("Le dossier acteur est introuvable")
-
-        try:
-            if uid:
-                cible = list(dossier.rglob(f"{uid}.json"))
-                if cible:
-                    fichier = cible[0]
-                    with fichier.open("r", encoding="utf-8") as fichier:
-                        return json.load(fichier), str(fichier)
-
-            fichiers = sorted(dossier.rglob("*.json"), key=lambda p: p.as_posix())
-            if not fichiers:
-                raise LectureException("Aucun fichier acteur n'a été trouvé")
-
-            if uid:
-                for fichier in fichiers:
-                    with fichier.open("r", encoding="utf-8") as fichier:
-                        data = json.load(fichier)
-                        if data.get("acteur", {}).get("uid", {}).get("#text") == uid:
-                            return data, str(fichier)
-                raise LectureException(f"Aucun acteur avec uid='{uid}'")
-
-            with fichiers[0].open("r", encoding="utf-8") as fichier:
-                return json.load(fichier), str(fichiers[0])
-
-        except LectureException:
-            raise
-        except Exception as e:
-            logging.exception("Erreur lecture JSON acteur")
-            raise LectureException("Impossible de récupérer l'acteur") from e
 

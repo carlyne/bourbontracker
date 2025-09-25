@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, Any
+from typing import Optional, Any, List
 from pydantic import BaseModel, Field, ConfigDict
 
 from src.metier.documentLegislatif.objet.cycleDeVie.cycleDeVie import CycleDeVie
@@ -7,6 +7,7 @@ from src.metier.documentLegislatif.objet.titre import Titres
 from src.metier.documentLegislatif.objet.notice import Notice
 from src.metier.documentLegislatif.objet.auteurs.auteurs import Auteurs
 from src.metier.documentLegislatif.objet.classification.classification import Classification
+from src.metier.acteur.objet.acteurDocument import ActeurDocument
 
 class DocumentLegislatif(BaseModel):
     model_config = ConfigDict(
@@ -34,6 +35,7 @@ class DocumentLegislatif(BaseModel):
 
     notice: Optional["Notice"] = None
     indexation: Optional[Any] = None
+    acteurs_documents: Optional[List[ActeurDocument]] = None
 
 def parser(payload: dict | str) -> DocumentLegislatif:
     if isinstance(payload, str):
