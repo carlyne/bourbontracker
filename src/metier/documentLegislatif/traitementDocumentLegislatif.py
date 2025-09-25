@@ -1,5 +1,5 @@
 import logging
-from datetime import date
+from datetime import date, datetime
 from typing import Sequence, List
 
 from src.metier.applicationExceptions import DocumentLegislatifIntrouvableException
@@ -51,8 +51,18 @@ class TraitementDocumentLegislatif:
 
             d2 = d.model_copy(update={"acteurs_documents": acteurs_docs})
             docs_enrichis.append(d2)
+
+        docs_enrichis.sort(key=self._sort_key, reverse=True)
         
         self.stockage_document_legislatif.nettoyer_dossier_docs()
 
         return docs_enrichis
+
+    def _sort_key(self, document_legislatif: DocumentLegislatif):
+            date_creation = self._date_creation(document_legislatif)
+            return (date_creation is not None, date_creation or datetime.min)
+    
+    def _date_creation(self, document_legislatif: DocumentLegislatif) -> datetime | None:
+        return getattr(getattr(getattr(document_legislatif, "cycle_de_vie", None), "chrono", None), "date_creation", None)
+
 

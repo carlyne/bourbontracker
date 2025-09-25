@@ -54,6 +54,7 @@ class StockageDocumentLegislatif:
                             "dateCreation non exploitable (type=%s) pour uid=%s, fichier=%s, valeur=%r",
                             type(date_fichier).__name__, uid, element.path, date_fichier
                         )
+                        fichiers.append(data)
                         continue
                     try:
                         datetime_fichier = datetime.fromisoformat(date_fichier)

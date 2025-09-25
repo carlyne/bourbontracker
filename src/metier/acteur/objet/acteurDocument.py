@@ -76,7 +76,12 @@ class Adresse(BaseModel):
     ville: Optional[str] = None
 
 class Mandat(BaseModel):
+    """
+    Note: certains mandats (e.g. MandatMission_Type) exposent organes.organeRef
+    comme *liste* de références. On normalise en une liste de str.
+    """
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
     uid: str
     acteur_ref: Optional[str] = Field(alias="acteurRef", default=None)
     legislature: Optional[str] = None
@@ -86,10 +91,16 @@ class Mandat(BaseModel):
     date_publication: Optional[date] = Field(alias="datePublication", default=None)
     date_fin: Optional[date] = Field(alias="dateFin", default=None)
 
-    organe_ref: Optional[str] = None
+    # <<--------- changement ici: toujours une liste --------->>
+    organe_refs: List[str] = Field(default_factory=list)
+
+    # champs qualité
     code_qualite: Optional[str] = None
     lib_qualite: Optional[str] = None
     lib_qualite_sex: Optional[str] = None
+
+    # optionnel pour MandatMission_Type
+    libelle: Optional[str] = None
 
     @field_validator("date_debut", "date_publication", "date_fin", mode="before")
     @classmethod
@@ -100,14 +111,20 @@ class Mandat(BaseModel):
 
     @classmethod
     def from_json(cls, payload: dict) -> "Mandat":
-        organe_ref = _get(payload, "organes", "organeRef")
+        # organes.organeRef peut être str ou list[str]
+        raw_org = _get(payload, "organes", "organeRef")
+        org_list = _ensure_list(_normalize(raw_org))
+        org_list = [str(x) for x in org_list if isinstance(x, (str, int)) and str(x)]
+
         iq = _get(payload, "infosQualite") or {}
         return cls.model_validate({
             **payload,
-            "organe_ref": organe_ref,
+            "organe_refs": org_list,
             "code_qualite": iq.get("codeQualite"),
             "lib_qualite": iq.get("libQualite"),
             "lib_qualite_sex": iq.get("libQualiteSex"),
+            # MandatMission_Type fournit parfois un "libelle" au même niveau
+            "libelle": payload.get("libelle"),
         })
 
 class ActeurDocument(BaseModel):
