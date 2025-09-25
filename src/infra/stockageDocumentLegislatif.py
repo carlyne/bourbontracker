@@ -115,3 +115,17 @@ class StockageDocumentLegislatif:
                     os.makedirs(os.path.dirname(chemin_de_destination), exist_ok=True)
                     with dossier.open(fichier) as source, open(chemin_de_destination, 'wb') as destination:
                         shutil.copyfileobj(source,destination)
+
+    def nettoyer_dossier_docs(self) -> None:
+        base = Path(self.chemin_racine).resolve()
+        logging.info("Réinitialisation de '%s' (suppression + recréation)", base)
+        try:
+            if base.exists() and base.is_dir() and base.name == "docs":
+                try:
+                    shutil.rmtree(base)
+                except Exception:
+                    logging.exception("Suppression de %s échouée", base)
+                    raise
+                base.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            logging.exception("Réinitialisation de %s échouée", base)

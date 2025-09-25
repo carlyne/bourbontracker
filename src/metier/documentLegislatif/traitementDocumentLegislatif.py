@@ -3,7 +3,7 @@ from datetime import date
 from typing import Sequence, List
 
 from src.metier.applicationExceptions import DocumentLegislatifIntrouvableException
-from src.infra.stockageDocument import StockageDocumentLegislatif
+from src.infra.stockageDocumentLegislatif import StockageDocumentLegislatif
 from src.infra.stockageActeur import StockageActeur
 from src.metier.documentLegislatif.objet.documentLegislatif import DocumentLegislatif, parser as parse_doc
 from src.infra.typeFiltrage import TypeFiltrage
@@ -51,6 +51,8 @@ class TraitementDocumentLegislatif:
 
             d2 = d.model_copy(update={"acteurs_documents": acteurs_docs})
             docs_enrichis.append(d2)
+        
+        self.stockage_document_legislatif.nettoyer_dossier_docs()
 
         return docs_enrichis
 
