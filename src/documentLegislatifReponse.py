@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from typing import Optional, List
+from pydantic import BaseModel, ConfigDict, AliasChoices, Field
 
 from src.metier.documentLegislatif.objet.cycleDeVie.cycleDeVie import CycleDeVie
 from src.metier.documentLegislatif.objet.titre import Titres
-from src.metier.documentLegislatif.objet.auteurs.auteurs import Auteurs
+from src.metier.acteur.objet.acteurDocument import ActeurDocument
 
 class DocumentLegislatifReponse(BaseModel):
     model_config = ConfigDict(
@@ -16,4 +16,7 @@ class DocumentLegislatifReponse(BaseModel):
 
     cycle_de_vie: Optional[CycleDeVie] = None
     titres: Optional[Titres] = None
-    auteurs: Optional[Auteurs] = None
+    auteurs: Optional[List[ActeurDocument]] = Field(
+        default=None,
+        validation_alias=AliasChoices("acteurs_documents", "auteurs"),
+    )
