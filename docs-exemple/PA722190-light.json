@@ -1,0 +1,125 @@
+{
+    "acteur": {
+        "@xmlns": "http://schemas.assemblee-nationale.fr/referentiel",
+        "uid": {
+            "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+            "@xsi:type": "IdActeur_type",
+            "#text": "PA722190"
+        },
+        "etatCivil": {
+            "ident": {
+                "civ": "M.",
+                "prenom": "Gabriel",
+                "nom": "Attal",
+                "alpha": "Attal",
+                "trigramme": "GAT"
+            },
+            "infoNaissance": {
+                "dateNais": "1989-03-16",
+                "villeNais": "Clamart",
+                "depNais": "Hauts-de-Seine",
+                "paysNais": "France"
+            },
+            "dateDeces": {
+                "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+                "@xsi:nil": "true"
+            }
+        },
+        "profession": {
+            "libelleCourant": "Consultant",
+            "socProcINSEE": {
+                "catSocPro": "Cadres des services administratifs et commerciaux d\u2019entreprise",
+                "famSocPro": "Cadres et professions intellectuelles sup\u00e9rieures"
+            }
+        },
+        "uri_hatvp": "https://www.hatvp.fr/pages_nominatives/attal-gabriel",
+        "adresses": {
+            "adresse": [
+                {
+                    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+                    "@xsi:type": "AdressePostale_Type",
+                    "uid": "AD722192",
+                    "type": "0",
+                    "typeLibelle": "Adresse officielle",
+                    "poids": "1",
+                    "adresseDeRattachement": null,
+                    "intitule": "Assembl\u00e9e nationale,",
+                    "numeroRue": "126",
+                    "nomRue": "Rue de l'Universit\u00e9,",
+                    "complementAdresse": null,
+                    "codePostal": "75355",
+                    "ville": "Paris 07 SP"
+                }
+            ]
+        },
+        "mandats": {
+            "mandat": [
+                {
+                    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+                    "@xsi:type": "MandatParlementaire_type",
+                    "uid": "PM843659",
+                    "acteurRef": "PA722190",
+                    "legislature": "17",
+                    "typeOrgane": "ASSEMBLEE",
+                    "dateDebut": "2024-07-07",
+                    "datePublication": null,
+                    "dateFin": null,
+                    "preseance": "50",
+                    "nominPrincipale": "1",
+                    "infosQualite": {
+                        "codeQualite": "membre",
+                        "libQualite": "membre",
+                        "libQualiteSex": "membre"
+                    },
+                    "organes": {
+                        "organeRef": "PO838901"
+                    },
+                    "suppleants": {
+                        "suppleant": {
+                            "dateDebut": "2024-07-07",
+                            "dateFin": null,
+                            "suppleantRef": "PA795934"
+                        }
+                    },
+                    "chambre": null,
+                    "election": {
+                        "lieu": {
+                            "region": "Ile-de-France",
+                            "regionType": "M\u00e9tropolitain",
+                            "departement": "Hauts-de-Seine",
+                            "numDepartement": "92",
+                            "numCirco": "10"
+                        },
+                        "causeMandat": "\u00e9lections g\u00e9n\u00e9rales",
+                        "refCirconscription": "PO840009"
+                    },
+                    "mandature": {
+                        "datePriseFonction": "2024-07-08",
+                        "causeFin": null,
+                        "premiereElection": "1",
+                        "placeHemicycle": "267",
+                        "mandatRemplaceRef": null
+                    },
+                    "collaborateurs": {
+                        "collaborateur": [
+                            {
+                                "qualite": "M.",
+                                "prenom": "Charlie",
+                                "nom": "Vairetty",
+                                "dateDebut": null,
+                                "dateFin": null
+                            },
+                            {
+                                "qualite": "Mme",
+                                "prenom": "Virginie",
+                                "nom": "Vincent",
+                                "dateDebut": null,
+                                "dateFin": null
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

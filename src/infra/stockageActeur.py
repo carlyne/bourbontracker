@@ -13,37 +13,32 @@ class StockageActeur:
     def __init__(self):
         self.chemin_racine: Path = Path("docs").resolve()
         self.chemin_racine.mkdir(parents=True, exist_ok=True)
+
         self.chemin_zip: Path = self.chemin_racine / "acteurs.zip"
         self.chemin_acteur: Path = self.chemin_racine / "acteur"
+
         self.url: str = (
             "http://data.assemblee-nationale.fr/static/openData/repository/17/amo/"
             "deputes_senateurs_ministres_legislature/AMO20_dep_sen_min_tous_mandats_et_organes.json.zip"
         )
 
-    def mettre_a_jour(self):
+    def mettre_a_jour(self) -> list[Path]:
         try:
             logging.debug("Mise à jour des fichiers acteur vers : %s", self.chemin_acteur)
-            self._telecharger()
-            self._dezipper()
+            self._telecharger_dossier_zip()
+            return self._dezipper_fichiers()
         except Exception as e:
             logging.error("Erreur lors de la mise à jour des données acteur : %s", e, exc_info=True)
             raise MiseAJourStockException("Impossible de récupérer les données à jour des acteurs") from e
         
-    def lire_acteur_par_ref(self, acteur_ref: str) -> dict | None:
-        p = Path(self.chemin_acteur) / f"{acteur_ref}.json"
-        if not p.is_file():
-            logging.warning("Fichier acteur introuvable: %s", p)
-            return None
-        try:
-            with p.open("r", encoding="utf-8") as fh:
-                return json.load(fh)
-        except Exception as e:
-            logging.exception("Impossible de lire le JSON acteur %s: %s", p, e)
-            return None
+    def recuperer_acteur_par_ref(self, acteur_ref: str) -> dict | None:
+        chemin_fichier = self._recuperer_fichier_acteur(acteur_ref)
+        with chemin_fichier.open("r", encoding="utf-8") as fichier:
+            return json.load(fichier)
         
     # --- Private functions
 
-    def _telecharger(self) -> Path:
+    def _telecharger_dossier_zip(self):
         self.chemin_zip.parent.mkdir(parents=True, exist_ok=True)
 
         logging.debug("Téléchargement du dossier '.zip' des acteurs vers : %s", self.chemin_zip)
@@ -51,7 +46,7 @@ class StockageActeur:
         chemin_temporaire = self._telecharger_dans_un_chemin_temporaire(self.chemin_zip)
         chemin_temporaire.replace(self.chemin_zip)
     
-    def _dezipper(self):
+    def _dezipper_fichiers(self) -> list[Path]:
         prefixe = "json/acteur/"
         self.chemin_acteur.mkdir(parents=True, exist_ok=True)
 
@@ -92,3 +87,9 @@ class StockageActeur:
             for chunk in reponse.iter_content(chunk_size=256 * 1024):
                 if chunk:
                     tmp.write(chunk)
+    
+    def _recuperer_fichier_acteur(self, acteur_ref: str) -> Path:
+        chemin_fichier = (self.chemin_acteur / acteur_ref).with_suffix(".json")
+        if not chemin_fichier.exists():
+            return None
+        return chemin_fichier

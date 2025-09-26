@@ -41,7 +41,7 @@ class TraitementDocumentLegislatif:
 
             acteurs_docs: List[ActeurDocument] = []
             for ar in sorted(set(refs)):
-                raw = self.stockage_acteur.lire_acteur_par_ref(ar)
+                raw = self.stockage_acteur.recuperer_acteur_par_ref(ar)
                 if not raw:
                     continue
                 try:
