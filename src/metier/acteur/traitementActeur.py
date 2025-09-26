@@ -15,7 +15,7 @@ class TraitementActeur:
     def recuperer_acteur(self, uid: str | None = None) -> Acteur:
         logging.info("Récupération d'un acteur (uid=%s)", uid)
         self.stockage.mettre_a_jour()
-        data, chemin = self.stockage.recuperer_acteur_depuis_uid(uid)
+        data, chemin = self.stockage.recuperer_acteur_par_ref(uid)
         if not data:
             raise ActeurIntrouvableException("Aucun acteur trouvé")
         try:
