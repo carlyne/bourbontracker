@@ -8,7 +8,7 @@ from pathlib import Path
 import json
 from typing import Any
 
-from src.infra.infrastructureException import TelechargementException, LectureException
+from src.infra.infrastructureException import MiseAJourStockException, LectureException
 from src.infra.typeFiltrage import TypeFiltrage
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ class StockageDocumentLegislatif:
             self._dezipper_dossier_vers_destination(dossier_zip)
         except Exception as e:
             logging.error(f"Erreur lors du téléchargement du dossier zip correspondant aux documents legislatifs : {e}", exc_info=True)
-            raise TelechargementException(f"Impossible de traiter le dossier zip correspondant aux documents legislatifs")
+            raise MiseAJourStockException(f"Impossible de traiter le dossier zip correspondant aux documents legislatifs")
 
     def _telecharger_dossier(self, url, chemin_zip_temporaire):
         logging.info(f"Téléchargement du dossier zip {chemin_zip_temporaire}")

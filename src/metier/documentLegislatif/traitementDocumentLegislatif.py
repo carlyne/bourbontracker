@@ -28,7 +28,7 @@ class TraitementDocumentLegislatif:
         
         docs: list[DocumentLegislatif] = [parse_doc(f) for f in fichiers]
 
-        self.stockage_acteur.mettre_a_jour_stock_acteurs()
+        self.stockage_acteur.mettre_a_jour()
 
         docs_enrichis: list[DocumentLegislatif] = []
         for d in docs:

@@ -7,7 +7,7 @@ from src.documentLegislatifReponse import DocumentLegislatifReponse
 from src.metier.documentLegislatif.objet.documentLegislatif import DocumentLegislatif
 from src.metier.documentLegislatif.traitementDocumentLegislatif import TraitementDocumentLegislatif
 from src.metier.applicationExceptions import DocumentLegislatifIntrouvableException
-from src.infra.infrastructureException import TelechargementException, LectureException
+from src.infra.infrastructureException import MiseAJourStockException, LectureException
 from src.infra.typeFiltrage import TypeFiltrage
 
 traitement_document_legislatif = TraitementDocumentLegislatif()
@@ -55,8 +55,8 @@ def _json_error(message: str, status_code: int):
 def not_found_handler(_, exc: DocumentLegislatifIntrouvableException):
     return _json_error(str(exc), status.HTTP_404_NOT_FOUND)
 
-@app.exception_handler(TelechargementException)
-def download_handler(_, exc: TelechargementException):
+@app.exception_handler(MiseAJourStockException)
+def download_handler(_, exc: MiseAJourStockException):
     return _json_error(str(exc), status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @app.exception_handler(LectureException)
