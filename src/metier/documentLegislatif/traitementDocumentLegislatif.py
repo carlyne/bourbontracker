@@ -20,8 +20,11 @@ class TraitementDocumentLegislatif:
             date: date | None,
             type_filtrage: TypeFiltrage = TypeFiltrage.jour
             ) -> list[DocumentLegislatif]:
-        logging.info("Récupération des documents législatifs correspondants à la date %s", date)
-        self.stockage_document_legislatif.mettre_a_jour_stock_documents_legislatifs()
+        
+        logging.debug("Récupération des documents législatifs correspondants à la date %s", date)
+
+        self.stockage_document_legislatif.mettre_a_jour()
+        
         fichiers: Sequence[dict] = self.stockage_document_legislatif.recuperer_documents_legislatifs_par_date(date,type_filtrage)
         if not fichiers:
             raise DocumentLegislatifIntrouvableException("Aucun document législatif trouvé")
