@@ -2,11 +2,11 @@ from __future__ import annotations
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, AliasChoices, Field
 
-from src.metier.documentLegislatif.objet.cycleDeVie.cycleDeVie import CycleDeVie
-from src.metier.documentLegislatif.objet.titre import Titres
+from src.metier.document.objet.cycleDeVie.cycleDeVie import CycleDeVie
+from src.metier.document.objet.titre import Titres
 from src.metier.acteur.objet.acteurDocument import ActeurDocument
 
-class DocumentLegislatifReponse(BaseModel):
+class DocumentReponse(BaseModel):
     model_config = ConfigDict(
         extra="ignore",
         populate_by_name=True,

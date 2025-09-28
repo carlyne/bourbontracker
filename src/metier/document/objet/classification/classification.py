@@ -2,9 +2,9 @@ from __future__ import annotations
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.metier.documentLegislatif.objet.classification.typeClassification import TypeClassification
-from src.metier.documentLegislatif.objet.classification.sousType import SousType
-from src.metier.documentLegislatif.objet.classification.famille.famille import Famille
+from src.metier.document.objet.classification.typeClassification import TypeClassification
+from src.metier.document.objet.classification.sousType import SousType
+from src.metier.document.objet.classification.famille.famille import Famille
 
 class Classification(BaseModel):
     model_config = ConfigDict(extra="ignore")

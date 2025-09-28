@@ -2,14 +2,14 @@ from __future__ import annotations
 from typing import Optional, Any, List
 from pydantic import BaseModel, Field, ConfigDict
 
-from src.metier.documentLegislatif.objet.cycleDeVie.cycleDeVie import CycleDeVie
-from src.metier.documentLegislatif.objet.titre import Titres
-from src.metier.documentLegislatif.objet.notice import Notice
-from src.metier.documentLegislatif.objet.auteurs.auteurs import Auteurs
-from src.metier.documentLegislatif.objet.classification.classification import Classification
+from src.metier.document.objet.cycleDeVie.cycleDeVie import CycleDeVie
+from src.metier.document.objet.titre import Titres
+from src.metier.document.objet.notice import Notice
+from src.metier.document.objet.auteurs.auteurs import Auteurs
+from src.metier.document.objet.classification.classification import Classification
 from src.metier.acteur.objet.acteurDocument import ActeurDocument
 
-class DocumentLegislatif(BaseModel):
+class Document(BaseModel):
     model_config = ConfigDict(
         extra="ignore",
         populate_by_name=True,
@@ -37,7 +37,7 @@ class DocumentLegislatif(BaseModel):
     indexation: Optional[Any] = None
     acteurs_documents: Optional[List[ActeurDocument]] = None
 
-def parser(payload: dict | str) -> DocumentLegislatif:
+def parser(payload: dict | str) -> Document:
     if isinstance(payload, str):
         from json import loads
         root = loads(payload)
@@ -48,4 +48,4 @@ def parser(payload: dict | str) -> DocumentLegislatif:
     if doc is None:
         raise ValueError("Clé 'document' absente du JSON")
 
-    return DocumentLegislatif.model_validate(doc)
+    return Document.model_validate(doc)

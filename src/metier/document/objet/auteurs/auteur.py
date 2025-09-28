@@ -2,8 +2,9 @@ from __future__ import annotations
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
-from src.metier.documentLegislatif.objet.cycleDeVie.chrono import Chrono
+from src.metier.document.objet.auteurs.acteur import Acteur
 
-class CycleDeVie(BaseModel):
+class Auteur(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    chrono: Optional[Chrono] = None 
+
+    acteur: Optional[Acteur] = None

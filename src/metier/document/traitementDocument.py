@@ -2,38 +2,52 @@ import logging
 from datetime import date, datetime
 from typing import Sequence, List
 
-from src.metier.applicationExceptions import DocumentLegislatifIntrouvableException
-from src.infra.stockageDocumentLegislatif import StockageDocumentLegislatif
+from src.metier.applicationExceptions import DocumentIntrouvableException
+from src.metier.document.objetv2.document import creer_document_depuis_fichier
+from src.infra.stockageDocument import StockageDocument
 from src.infra.stockageActeur import StockageActeur
-from src.metier.documentLegislatif.objet.documentLegislatif import DocumentLegislatif, parser as parse_doc
-from src.infra.typeFiltrage import TypeFiltrage
+from src.metier.document.objet.documentLegislatif import Document, parser as parse_doc
 from src.metier.acteur.objet.acteurDocument import ActeurDocument
 
-class TraitementDocumentLegislatif:
+class TraitementDocument:
     def __init__(self):
         logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
-        self.stockage_document_legislatif = StockageDocumentLegislatif()
+        self.stockage_document = StockageDocument()
         self.stockage_acteur = StockageActeur()
     
-    def recuperer_documents_legislatifs(
-            self, 
-            date: date | None,
-            type_filtrage: TypeFiltrage = TypeFiltrage.jour
-            ) -> list[DocumentLegislatif]:
+   
+    def recuperer_documents(self) -> list[Document] :
+        self.stockage_document.mettre_a_jour()
+        
+        fichiers: Sequence[dict] = self.stockage_document.recuperer_documents_recents()
+
+        if not fichiers:
+            raise DocumentIntrouvableException("Aucun document trouvé")
+        
+        documents: list[Document] = [creer_document_depuis_fichier(fichier) for fichier in fichiers]
+
+        self.stockage_document.vider_dossier_racice()
+
+        return documents
+        
+   
+    def _recuperer_documents_legislatifs(
+            self
+            ) -> list[Document]:
         
         logging.debug("Récupération des documents législatifs correspondants à la date %s", date)
 
-        self.stockage_document_legislatif.mettre_a_jour()
+        self.stockage_document.mettre_a_jour()
         
-        fichiers: Sequence[dict] = self.stockage_document_legislatif.recuperer_documents_legislatifs_par_date(date,type_filtrage)
+        fichiers: Sequence[dict] = self.stockage_document.recuperer_documents_recents()
         if not fichiers:
-            raise DocumentLegislatifIntrouvableException("Aucun document législatif trouvé")
+            raise DocumentIntrouvableException("Aucun document législatif trouvé")
         
-        docs: list[DocumentLegislatif] = [parse_doc(f) for f in fichiers]
+        docs: list[Document] = [parse_doc(f) for f in fichiers]
 
         self.stockage_acteur.mettre_a_jour()
 
-        docs_enrichis: list[DocumentLegislatif] = []
+        docs_enrichis: list[Document] = []
         for d in docs:
             refs: List[str] = []
             if d.auteurs and d.auteurs.auteur:
@@ -57,15 +71,15 @@ class TraitementDocumentLegislatif:
 
         docs_enrichis.sort(key=self._sort_key, reverse=True)
         
-        self.stockage_document_legislatif.nettoyer_dossier_docs()
+        self.stockage_document.vider_dossier_racice()
 
         return docs_enrichis
 
-    def _sort_key(self, document_legislatif: DocumentLegislatif):
+    def _sort_key(self, document_legislatif: Document):
             date_creation = self._date_creation(document_legislatif)
             return (date_creation is not None, date_creation or datetime.min)
     
-    def _date_creation(self, document_legislatif: DocumentLegislatif) -> datetime | None:
+    def _date_creation(self, document_legislatif: Document) -> datetime | None:
         return getattr(getattr(getattr(document_legislatif, "cycle_de_vie", None), "chrono", None), "date_creation", None)
 
 

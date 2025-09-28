@@ -35,7 +35,7 @@ class _BaseStockage:
             logging.error("Erreur lors de la mise à jour des données : %s", e, exc_info=True)
             raise MiseAJourStockException("Impossible de récupérer les données à jour du dossier %s", self.chemin_dossier_dezippé) from e
         
-    def nettoyer_dossier_docs(self) -> None:
+    def vider_dossier_racice(self) -> None:
         base = Path(self.chemin_racine).resolve()
         logging.info("Réinitialisation de '%s' (suppression + recréation)", base)
         try:

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Optional, Any
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from src.metier.documentLegislatif.objet.auteurs.auteur import Auteur
+from src.metier.document.objet.auteurs.auteur import Auteur
 
 class Auteurs(BaseModel):
     model_config = ConfigDict(extra="ignore")
