@@ -1,7 +1,9 @@
 import json
-from pathlib import Path
+import logging
 
 from src.infra._baseStockage import _BaseStockage
+
+logger = logging.getLogger(__name__)
 
 class StockageActeur(_BaseStockage):
     def __init__(self):
@@ -14,15 +16,12 @@ class StockageActeur(_BaseStockage):
             )
         )
 
-    def recuperer_acteur_par_ref(self, acteur_ref: str) -> dict | None:
-        chemin_fichier = self._recuperer_fichier_acteur(acteur_ref)
-        with chemin_fichier.open("r", encoding="utf-8") as fichier:
-            return json.load(fichier)
-        
-    # --- Private functions
-    
-    def _recuperer_fichier_acteur(self, acteur_ref: str) -> Path:
-        chemin_fichier = (self.chemin_dossier_dezippé / acteur_ref).with_suffix(".json")
+    def recuperer_acteur_par_uid(self, uid: str) -> dict | None:
+        logger.debug("Récupération de l'acteur avec uid : %s",uid)
+        chemin_fichier = (self.chemin_dossier_dezippé / uid).with_suffix(".json")
+
         if not chemin_fichier.exists():
             return None
-        return chemin_fichier
+        
+        with chemin_fichier.open("r", encoding="utf-8") as fichier:
+            return json.load(fichier)

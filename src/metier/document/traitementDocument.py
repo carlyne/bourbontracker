@@ -31,7 +31,7 @@ class TraitementDocument:
         return documents
         
    
-    def _recuperer_documents_legislatifs(
+    def _recuperer_documents(
             self
             ) -> list[Document]:
         
@@ -58,7 +58,7 @@ class TraitementDocument:
 
             acteurs_docs: List[ActeurDocument] = []
             for ar in sorted(set(refs)):
-                raw = self.stockage_acteur.recuperer_acteur_par_ref(ar)
+                raw = self.stockage_acteur.recuperer_acteur_par_uid(ar)
                 if not raw:
                     continue
                 try:

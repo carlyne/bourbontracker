@@ -4,6 +4,7 @@ from typing_extensions import Annotated
 from datetime import date
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from pydantic.functional_validators import BeforeValidator
+from json import loads
 
 from src.metier._validators import NilableStr
 
@@ -214,14 +215,15 @@ def _normalize_xmlish(obj):
         return [_normalize_xmlish(x) for x in obj]
     return obj
 
-def parse_acteur(payload: dict | str) -> Acteur:
-    from json import loads
-    root = loads(payload) if isinstance(payload, str) else payload
-    if "acteur" not in root:
+def parse_acteur_depuis_fichier_json(payload: dict | str) -> Acteur:
+    racine = loads(payload) if isinstance(payload, str) else payload
+
+    if "acteur" not in racine:
         raise ValueError("Clé 'acteur' absente du JSON")
-    data = root["acteur"]
-    data = _normalize_xmlish(data)
     
-    return Acteur.model_validate(data)
+    donnée = racine["acteur"]
+    donnée = _normalize_xmlish(donnée)
+    
+    return Acteur.model_validate(donnée)
 
 
