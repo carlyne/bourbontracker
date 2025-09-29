@@ -1,6 +1,5 @@
 import logging
-from datetime import date, datetime
-from typing import Sequence, List
+from typing import Sequence
 
 from src.metier.applicationExceptions import DocumentIntrouvableException
 from src.metier.document.document import Document
