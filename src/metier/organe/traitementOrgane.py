@@ -21,7 +21,6 @@ class TraitementOrgane:
         if fichier is None:
             raise OrganeIntrouvableException(f"Organe introuvable pour uid='{uid}'")
         try:
-            self.stockage.vider_dossier_racice()
             return parse_organe_depuis_fichier_json(fichier)
         except ValidationError as e: 
             logger.error("Erreur de validation pour le fichier Organe avec uid=%s : %s", uid, e)

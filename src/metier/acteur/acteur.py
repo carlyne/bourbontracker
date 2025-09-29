@@ -1,9 +1,9 @@
 from __future__ import annotations
-
 from datetime import date
 from typing import Any, Dict, Optional, List
-
 from pydantic import BaseModel, Field, ConfigDict, HttpUrl, field_validator
+
+from src.metier.organe.organe import Organe
 
 class Uid(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
@@ -150,6 +150,7 @@ class Acteur(BaseModel):
     profession: Optional[Profession] = None
     url_fiche_acteur: Optional[HttpUrl] = Field(default=None, alias='uri_hatvp')
     mandats: Optional[Mandats] = None
+    organes_acteur: List[Organe] = Field(default_factory=list)
 
 def parse_acteur_depuis_fichier_json(donnée: Dict[str, Any]) -> Acteur:
     return Acteur.model_validate(donnée["acteur"])
