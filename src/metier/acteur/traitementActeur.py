@@ -21,6 +21,7 @@ class TraitementActeur:
         if fichier is None:
             raise ActeurIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
         try:
+            self.stockage.vider_dossier_racice()
             return parse_acteur_depuis_fichier_json(fichier)
         except ValidationError as e: 
             logger.error("Erreur de validation pour le fichier Acteur avec uid=%s : %s", uid, e)
