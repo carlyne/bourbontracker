@@ -142,9 +142,6 @@ class Mandats(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
     mandat: List[Mandat] = Field(default_factory=list)
 
-
-# ---------- Racine “Acteur”
-
 class Acteur(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
@@ -154,5 +151,5 @@ class Acteur(BaseModel):
     url_fiche_acteur: Optional[HttpUrl] = Field(default=None, alias='uri_hatvp')
     mandats: Optional[Mandats] = None
 
-def parse_acteur(data: Dict[str, Any]) -> Acteur:
-    return Acteur.model_validate(data)
+def parse_acteur_depuis_fichier_json(donnée: Dict[str, Any]) -> Acteur:
+    return Acteur.model_validate(donnée["acteur"])

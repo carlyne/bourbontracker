@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from src.infra.stockageActeur import StockageActeur
 from src.metier.applicationExceptions import ActeurIntrouvableException
-from src.metier.acteur.objet.acteur import Acteur, parse_acteur_depuis_fichier_json
+from src.metier.acteur.acteur import Acteur, parse_acteur_depuis_fichier_json
 
 logger = logging.getLogger(__name__)
 

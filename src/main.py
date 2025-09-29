@@ -1,9 +1,8 @@
 from fastapi import FastAPI, status
 from fastapi.responses import ORJSONResponse, JSONResponse
 
-from src.documentReponse import DocumentReponse
-from src.metier.document.objet.documentLegislatif import Document
-from src.metier.acteur.objetv2.acteur import Acteur
+from src.metier.document.document import Document
+from src.metier.acteur.acteur import Acteur
 from src.metier.document.traitementDocument import TraitementDocument
 from src.metier.acteur.traitementActeur import TraitementActeur
 from src.metier.applicationExceptions import DocumentIntrouvableException, ActeurIntrouvableException
@@ -17,7 +16,7 @@ app = FastAPI(default_response_class=ORJSONResponse)
 # --- Documents
 
 @app.get(
-    "/v1/documents/raw",
+    "/v1/documents",
     response_model=list[Document],
     status_code=status.HTTP_200_OK,
 )
@@ -25,23 +24,10 @@ def retournerDocumentsBrut(
 ):
     return traitement_document.recuperer_documents()
 
-@app.get(
-    "/v1/documents",
-    response_model=list[DocumentReponse],
-    status_code=status.HTTP_200_OK,
-)
-def retournerDocumentLegislatif( 
-):
-    documents = traitement_document._recuperer_documents()
-    return [
-        DocumentReponse.model_validate(document, from_attributes=True)
-        for document in documents
-    ]
-
 # --- Acteur
 
 @app.get(
-    "/v1/acteurs/raw/{uid}",
+    "/v1/acteurs/{uid}",
     response_model=Acteur,
     status_code=status.HTTP_200_OK,
 )
