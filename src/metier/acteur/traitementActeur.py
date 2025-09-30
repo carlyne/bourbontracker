@@ -1,23 +1,22 @@
 import logging
 from pydantic import ValidationError
-from typing import List
+from typing import Dict, List
 
 from src.metier.organe.organe import Organe
 from src.metier.organe.traitementOrgane import TraitementOrgane
 from src.infra.stockageActeur import StockageActeur
 from src.metier.applicationExceptions import ActeurIntrouvableException
-from src.metier.acteur.acteur import Acteur, parse_acteur_depuis_fichier_json
+from src.metier.acteur.acteur import Acteur, Mandat, Mandats, parse_acteur_depuis_fichier_json
 
 logger = logging.getLogger(__name__)
 
 class TraitementActeur:
     def __init__(self):
-        logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"),
         self.stockage_acteur = StockageActeur()
         self.traitement_organe = TraitementOrgane()
 
     def recuperer_acteur(self, uid: str | None = None) -> Acteur:
-        logging.debug("Récupération de l'acteur avec uid : %s)", uid)
+        logger.debug("Récupération de l'acteur avec uid : %s)", uid)
 
         self.stockage_acteur.mettre_a_jour()
         fichier = self.stockage_acteur.recuperer_acteur_par_uid(uid)
@@ -44,12 +43,27 @@ class TraitementActeur:
                     raise ActeurIntrouvableException(
                         f"Acteur avec Organe invalide dans le fichier: {uid}.json"
                     ) from e
+            
+            organes_uids: Dict[str, Organe] = {organe.uid: organe for organe in organes if organe and organe.uid}
+            mandats: List[Mandat] = acteur.mandats.mandat if (acteur.mandats and acteur.mandats.mandat) else []
+            mandats_avec_details_organes: List[Mandat] = []
                 
-            acteur = acteur.model_copy(update={"organes_acteur": organes})
+            for mandat in mandats:
+                organe_ref = mandat.organes.organeRef
+
+                if mandat and mandat.organes and organe_ref:
+                    detail = organes_uids.get(organe_ref)
+                    organes_avec_detail = mandat.organes.model_copy(update={"detail": detail})
+                    mandat = mandat.model_copy(update={"organes": organes_avec_detail})
+                    
+                mandats_avec_details_organes.append(mandat)
+
+            acteur = acteur.model_copy(update={"mandats": Mandats(mandat=mandats_avec_details_organes)})
 
             self.stockage_acteur.vider_dossier_racice()
             
             return acteur
+        
         except ValidationError as e: 
             logger.error("Erreur de validation pour le fichier Acteur avec uid=%s : %s", uid, e)
             raise ActeurIntrouvableException(

@@ -1,4 +1,3 @@
-import logging
 from typing import Sequence
 
 from src.metier.applicationExceptions import DocumentIntrouvableException
@@ -8,7 +7,6 @@ from src.infra.stockageDocument import StockageDocument
 
 class TraitementDocument:
     def __init__(self):
-        logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(levelname)s - %(message)s')
         self.stockage_document = StockageDocument()
     
     def recuperer_documents(self) -> list[Document] :

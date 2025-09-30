@@ -9,11 +9,10 @@ logger = logging.getLogger(__name__)
 
 class TraitementOrgane:
     def __init__(self):
-        logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"),
         self.stockage = StockageOrgane()
 
     def recuperer_organe(self, uid: str | None = None) -> Organe:
-        logging.debug("Récupération de l'organe avec uid : %s)", uid)
+        logger.debug("Récupération de l'organe avec uid : %s)", uid)
 
         self.stockage.mettre_a_jour()
         fichier = self.stockage.recuperer_organe_par_uid(uid)

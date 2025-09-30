@@ -115,6 +115,8 @@ class InfosQualite(BaseModel):
 class Organes(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
     organeRef: Optional[str] = None
+    detail: Optional[Organe] = None
+
 
 class Mandat(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
@@ -150,7 +152,6 @@ class Acteur(BaseModel):
     profession: Optional[Profession] = None
     url_fiche_acteur: Optional[HttpUrl] = Field(default=None, alias='uri_hatvp')
     mandats: Optional[Mandats] = None
-    organes_acteur: List[Organe] = Field(default_factory=list)
 
 def parse_acteur_depuis_fichier_json(donnée: Dict[str, Any]) -> Acteur:
     return Acteur.model_validate(donnée["acteur"])

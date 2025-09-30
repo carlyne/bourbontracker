@@ -8,6 +8,8 @@ from typing import BinaryIO
 
 from src.infra.infrastructureException import MiseAJourStockException
 
+logger = logging.getLogger(__name__)
+
 class _BaseStockage:
     def __init__(
             self, 
@@ -27,33 +29,33 @@ class _BaseStockage:
 
     def mettre_a_jour(self) -> list[Path]:
         try:
-            logging.debug("Mise à jour du dossier %s", self.chemin_dossier_dezippé)
+            logger.debug("Mise à jour du dossier %s", self.chemin_dossier_dezippé)
             self._telecharger_dossier_zip()
             return self._dezipper_fichiers()
         except Exception as e:
-            logging.error("Erreur lors de la mise à jour des données : %s", e, exc_info=True)
+            logger.error("Erreur lors de la mise à jour des données : %s", e, exc_info=True)
             raise MiseAJourStockException("Impossible de récupérer les données à jour du dossier %s", self.chemin_dossier_dezippé) from e
         
     def vider_dossier_racice(self) -> None:
         base = Path(self.chemin_racine).resolve()
-        logging.info("Réinitialisation de '%s' (suppression + recréation)", base)
+        logger.info("Réinitialisation de '%s' (suppression + recréation)", base)
         try:
             if base.exists() and base.is_dir() and base.name == "docs":
                 try:
                     shutil.rmtree(base)
                 except Exception:
-                    logging.exception("Suppression de %s échouée", base)
+                    logger.exception("Suppression de %s échouée", base)
                     raise
                 base.mkdir(parents=True, exist_ok=True)
         except Exception:
-            logging.exception("Réinitialisation de %s échouée", base) 
+            logger.exception("Réinitialisation de %s échouée", base) 
 
     # --- Private functions
 
     def _telecharger_dossier_zip(self):
         self.chemin_zip.parent.mkdir(parents=True, exist_ok=True)
 
-        logging.debug("Téléchargement du dossier '.zip' vers : %s", self.chemin_zip)
+        logger.debug("Téléchargement du dossier '.zip' vers : %s", self.chemin_zip)
 
         chemin_temporaire = self._telecharger_dans_un_chemin_temporaire(self.chemin_zip)
         chemin_temporaire.replace(self.chemin_zip)
@@ -63,7 +65,7 @@ class _BaseStockage:
         self.chemin_dossier_dezippé.mkdir(parents=True, exist_ok=True)
 
         fichiers_extraits: list[Path] = []
-        logging.debug("Extraction des fichiers '.zip' '%s*' vers %s", prefixe, self.chemin_dossier_dezippé)
+        logger.debug("Extraction des fichiers '.zip' '%s*' vers %s", prefixe, self.chemin_dossier_dezippé)
 
         with zipfile.ZipFile(self.chemin_zip, "r") as fichier_zip:
             for info in fichier_zip.infolist():
@@ -88,13 +90,13 @@ class _BaseStockage:
     def _telecharger_dans_un_chemin_temporaire(self, destination: Path) -> Path:
         with tempfile.NamedTemporaryFile(dir=destination.parent, delete=False) as tmp:
             chemin_temporaire = Path(tmp.name)
-            logging.debug("Ecriture du dossier '.zip' %s dans un chemin temporaire : %s", self.nom_dossier, chemin_temporaire)
+            logger.debug("Ecriture du dossier '.zip' %s dans un chemin temporaire : %s", self.nom_dossier, chemin_temporaire)
             self._executer_requete_telechargement_dossier_zip(tmp)
         return chemin_temporaire
 
     def _executer_requete_telechargement_dossier_zip(self, tmp: BinaryIO):
         with requests.get(self.url, stream=True, timeout=(5, 30)) as reponse:
-            logging.debug("Requête de téléchargement du dossier '.zip' %s : %s %s", self.nom_dossier, reponse.request.method, reponse.url)
+            logger.debug("Requête de téléchargement du dossier '.zip' %s : %s %s", self.nom_dossier, reponse.request.method, reponse.url)
             reponse.raise_for_status()
             for chunk in reponse.iter_content(chunk_size=256 * 1024):
                 if chunk:
