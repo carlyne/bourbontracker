@@ -4,21 +4,14 @@ import logging
 
 from sqlalchemy import select
 
+from src.infra._baseConnexionBdd import _BaseConnexionBdd
 from src.infra.models import Acteur, Organe
-from src.infra._baseStockage import _BaseStockage
 
 logger = logging.getLogger(__name__)
 
-class StockageActeur(_BaseStockage):
+class RechercherActeur(_BaseConnexionBdd):
     def __init__(self):
-        super().__init__(
-            nom_dossier_zip="acteurs.zip",
-            nom_dossier="acteur",
-            url= (
-                "http://data.assemblee-nationale.fr/static/openData/repository/17/amo/"
-                "deputes_senateurs_ministres_legislature/AMO20_dep_sen_min_tous_mandats_et_organes.json.zip"
-            )
-        )
+        super().__init__()
 
     def recuperer_acteur_par_uid(self, uid: str) -> tuple[dict, list[dict]]:
         """
@@ -45,10 +38,3 @@ class StockageActeur(_BaseStockage):
             ).scalars().all()
 
             return acteur_payload, organes_payloads
-        
-    def mettre_a_jour_et_enregistrer_acteurs(self) -> int:
-        self._mettre_a_jour()
-        with self.SessionLocal() as session:
-            total_acteurs = self._enregistrer_depuis_dossier(session, Acteur, batch_size=1000)
-            session.commit()
-        return total_acteurs

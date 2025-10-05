@@ -4,6 +4,8 @@ from typing_extensions import Annotated
 from typing import List, Optional
 from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict
 
+from src.acteurReponse import ActeurReponse
+
 def _to_list(valeur):
     if valeur is None:
         return []
@@ -35,6 +37,7 @@ class ClassificationReponse(BaseModel):
 
 class ActeurRefReponse(BaseModel):
     acteurRef: Optional[str] = None
+    acteur_detail: Optional[ActeurReponse] = None
     qualite: Optional[str] = None
 
 class AuteurReponse(BaseModel):

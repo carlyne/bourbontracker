@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from json import loads
-from typing import Optional, Any, List
+from typing import Dict, Optional, Any, List
 from typing_extensions import Annotated
 from pydantic import BaseModel, Field, ConfigDict, AwareDatetime
 from pydantic.functional_validators import BeforeValidator
+
+from src.metier.acteur.acteur import Acteur as ActeurMetier
 
 def _to_list(v):
     if v is None:
@@ -62,6 +64,7 @@ class Titres(BaseModel):
 
 class Acteur(BaseModel):
     acteurRef: Optional[str] = None
+    acteur_detail: Optional[ActeurMetier] = None
     qualite: Optional[str] = None
 
 class Auteur(BaseModel):
@@ -96,14 +99,6 @@ class Document(BaseModel):
     notice: Optional[Notice] = None
     indexation: Optional[Any] = None
 
-def creer_document_depuis_fichier(payload: dict | str) -> Document:
-    if isinstance(payload, str):
-        root = loads(payload)
-    else:
-        root = payload
-
-    doc = root.get("document")
-    if doc is None:
-        raise ValueError("Clé 'document' absente du JSON")
-
-    return Document.model_validate(doc)
+def parse_document_depuis_payload(data: Dict[str, Any]) -> Document:
+    payload = data.get("document", data)
+    return Document.model_validate(payload)
