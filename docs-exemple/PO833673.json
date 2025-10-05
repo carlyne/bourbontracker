@@ -1,26 +1,24 @@
 {
-  "organe": {
-    "@xmlns": "http://schemas.assemblee-nationale.fr/referentiel",
-    "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
-    "@xsi:type": "OrganeParlementaire_Type",
-    "uid": "PO838901",
-    "codeType": "ASSEMBLEE",
-    "libelle": "Assemblée nationale de la 17ème législature",
-    "libelleEdition": "de l'Assemblée",
-    "libelleAbrege": "Assemblée",
-    "libelleAbrev": "AN",
-    "viMoDe": {
-      "dateDebut": "2024-07-01",
-      "dateAgrement": null,
-      "dateFin": null
-    },
-    "organeParent": null,
-    "chambre": null,
-    "regime": "5ème République",
-    "legislature": "17",
-    "secretariat": {
-      "secretaire01": null,
-      "secretaire02": null
-    }
-  }
+  "uid": "PO838901",
+  "@xmlns": "http://schemas.assemblee-nationale.fr/referentiel",
+  "regime": "5ème République",
+  "viMoDe": {
+    "dateFin": null,
+    "dateDebut": "2024-07-01",
+    "dateAgrement": null
+  },
+  "chambre": null,
+  "libelle": "Assemblée nationale de la 17ème législature",
+  "codeType": "ASSEMBLEE",
+  "@xsi:type": "OrganeParlementaire_Type",
+  "@xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+  "legislature": "17",
+  "secretariat": {
+    "secretaire01": null,
+    "secretaire02": null
+  },
+  "libelleAbrev": "AN",
+  "organeParent": null,
+  "libelleAbrege": "Assemblée",
+  "libelleEdition": "de l'Assemblée"
 }

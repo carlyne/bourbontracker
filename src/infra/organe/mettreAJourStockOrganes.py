@@ -6,7 +6,7 @@ from src.infra._baseStockage import _BaseStockage
 
 logger = logging.getLogger(__name__)
 
-class StockageOrgane(_BaseStockage):
+class MettreAJourStockOrganes(_BaseStockage):
     def __init__(self):
         super().__init__(
             nom_dossier_zip="acteurs.zip",
@@ -17,17 +17,9 @@ class StockageOrgane(_BaseStockage):
             )
         )
 
-    def recuperer_organe_par_uid(self, uid: str) -> dict | None:
-        logger.debug("Récupération de l'organe avec uid : %s",uid)
-        chemin_fichier = (self.dossier_dezippé / uid).with_suffix(".json")
+        self._mettre_a_jour_stock()
 
-        if not chemin_fichier.exists():
-            return None
-        
-        with chemin_fichier.open("r", encoding="utf-8") as fichier:
-            return json.load(fichier)
-
-    def mettre_a_jour_et_enregistrer_organes(self) -> int:
+    def _mettre_a_jour_stock(self) -> int:
         self._mettre_a_jour()
         with self.SessionLocal() as session:
             total_organes = self._enregistrer_depuis_dossier(session, Organe, batch_size=1000)

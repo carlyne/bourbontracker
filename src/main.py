@@ -1,32 +1,25 @@
 from fastapi import FastAPI, status
 from fastapi.responses import ORJSONResponse, JSONResponse
 
+from src.metier.organe.recupererOrgane import recuperer_organe
+from src.metier.acteur.recupererActeur import recuperer_acteur
+from src.organeReponse import OrganeReponse
+from src.acteurReponse import ActeurReponse
 from src.documentReponse import DocumentReponse
 from src.metier.organe.organe import Organe
-from src.metier.organe.traitementOrgane import TraitementOrgane
+from src.metier.organe.enregistrerOrgane import mettre_a_jour_organes
 from src.metier.document.document import Document
 from src.metier.acteur.acteur import Acteur
-from src.metier.document.traitementDocument import TraitementDocument
-from src.metier.acteur.traitementActeur import TraitementActeur
+from src.metier.document.recupererDocuments import recuperer_documents_semaine_courante_avec_acteurs
+from src.metier.document.enregistrerDocuments import mettre_a_jour_documents
+from src.metier.acteur.enregistrerActeurs import mettre_a_jour_acteurs
 from src.metier.applicationExceptions import DocumentIntrouvableException, ActeurIntrouvableException, OrganeIntrouvableException
 from src.infra.infrastructureException import MiseAJourStockException, LectureException
 
-traitement_document = TraitementDocument()
-traitement_acteur = TraitementActeur()
-traitement_organe = TraitementOrgane()
-
 app = FastAPI(default_response_class=ORJSONResponse)
 
-# --- Documents
 
-@app.get(
-    "/v1/documents/brut",
-    response_model=list[Document],
-    status_code=status.HTTP_200_OK,
-)
-def retournerDocumentsBrut( 
-):
-    return traitement_document.recuperer_documents()
+# --- Documents
 
 @app.get(
     "/v1/documents",
@@ -34,8 +27,8 @@ def retournerDocumentsBrut(
     response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
 )
-def retournerDocuments():
-    documents: list[Document] = traitement_document.recuperer_documents()
+def retourner_documents():
+    documents: list[Document] = recuperer_documents_semaine_courante_avec_acteurs()
     return [
         DocumentReponse.model_validate(document.model_dump(mode="python", by_alias=True))
         for document in documents
@@ -45,45 +38,53 @@ def retournerDocuments():
     "/v1/documents",
     status_code=status.HTTP_201_CREATED,
 )
-def enregistrerDocumentsBrut( 
-):
-    return traitement_document.enregistrer_documents()
+def enregistrer_documents():
+    return mettre_a_jour_documents()
+
 
 # --- Acteur
 
 @app.get(
     "/v1/acteurs/{uid}",
-    response_model=Acteur,
+    response_model=ActeurReponse, 
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
 )
-def retournerActeurBrut(uid: str) -> Acteur:
-    return traitement_acteur.recuperer_acteur(uid)
+def retourner_acteur(uid: str):
+    acteur: Acteur = recuperer_acteur(uid)
+    return ActeurReponse.model_validate(
+        acteur.model_dump(mode="python", by_alias=True)
+    )
 
 @app.post(
     "/v1/acteurs",
     status_code=status.HTTP_201_CREATED,
 )
-def enregistrerActeursBrut( 
-):
-    return traitement_acteur.enregistrer_acteurs()
+def enregistrer_acteurs():
+    return mettre_a_jour_acteurs()
+
 
 # --- Organe
 
 @app.get(
     "/v1/organes/{uid}",
-    response_model=Organe,
+    response_model=OrganeReponse,
+    response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
 )
-def retournerOrgane(uid: str) -> Organe:
-    return traitement_organe.recuperer_organe(uid)
+def retourner_organe(uid: str):
+    organe: Organe = recuperer_organe(uid)
+    return OrganeReponse.model_validate(
+        organe.model_dump(mode="python", by_alias=True)
+    )
 
 @app.post(
     "/v1/organes",
     status_code=status.HTTP_201_CREATED,
 )
-def enregistrerOrganesBrut( 
-):
-    return traitement_organe.enregistrer_organes()
+def enregistrer_organes():
+    return mettre_a_jour_organes()
+
 
 # --- Exceptions Handlers
 

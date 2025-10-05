@@ -5,6 +5,18 @@ from pydantic import BaseModel, Field, ConfigDict, HttpUrl, field_validator
 
 from src.metier.organe.organe import Organe
 
+def _nil_or_text(v: Any) -> Optional[str]:
+    if v is None: return None
+    if isinstance(v, str): s = v.strip(); return s or None
+    if isinstance(v, dict):
+        if str(v.get("@xsi:nil", "")).lower() == "true": return None
+        for k in ("#text", "text", "value"):
+            val = v.get(k)
+            if isinstance(val, str) and val.strip():
+                return val.strip()
+    return None
+
+
 class Uid(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
     text: str = Field(alias='#text')
@@ -21,6 +33,11 @@ class InfoNaissance(BaseModel):
     villeNais: Optional[str] = None
     depNais: Optional[str] = None
     paysNais: Optional[str] = None
+
+    @field_validator("villeNais", "depNais", "paysNais", mode="before")
+    @classmethod
+    def _nilable_str(cls, v):
+        return _nil_or_text(v)
 
 class DateDeces(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
@@ -152,6 +169,11 @@ class Acteur(BaseModel):
     profession: Optional[Profession] = None
     url_fiche_acteur: Optional[HttpUrl] = Field(default=None, alias='uri_hatvp')
     mandats: Optional[Mandats] = None
+
+    @field_validator("url_fiche_acteur", mode="before")
+    @classmethod
+    def _nilable_url(cls, v):
+        return _nil_or_text(v)
 
 def parse_acteur_depuis_fichier_json(donnée: Dict[str, Any]) -> Acteur:
     return Acteur.model_validate(donnée["acteur"])

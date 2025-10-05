@@ -6,19 +6,15 @@ from sqlalchemy import select, func, text, cast, DATE
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from src.infra._baseConnexionBdd import _BaseConnexionBdd
 from src.infra.models import Document
-from src.infra._baseStockage import _BaseStockage
 
 logger = logging.getLogger(__name__)
 
-class StockageDocument(_BaseStockage):
+class RechercherDocuments(_BaseConnexionBdd):
     
     def __init__(self):
-        super().__init__(
-            nom_dossier_zip="dossier_legislatifs.zip",
-            nom_dossier="document",
-            url= "http://data.assemblee-nationale.fr/static/openData/repository/17/loi/dossiers_legislatifs/Dossiers_Legislatifs.json.zip"
-    )
+        super().__init__()
 
     def recuperer_documents_semaine_courante(self) -> list[dict]: 
         """
@@ -33,10 +29,10 @@ class StockageDocument(_BaseStockage):
             # ->>      : extrait une valeur de type text (par clé ou index)
             # ::[type] : notation de cast postgresql (ici en timestamptz)
             timestamps = [
-                text("(payload -> 'document' -> 'cycle de vie' -> 'chrono' ->> 'dateCreation')::timestamptz"),
-                text("(payload -> 'document' -> 'cycleDeVie' -> 'chrono' ->> 'dateDepot')::timestamptz"),
-                text("(payload -> 'document' -> 'cycleDeVie' -> 'chrono' ->> 'datePublication')::timestamptz"),
-                text("(payload -> 'document' -> 'cycleDeVie' -> 'chrono' ->> 'datePublicationWeb')::timestamptz")
+                text("(payload -> 'cycle de vie' -> 'chrono' ->> 'dateCreation')::timestamptz"),
+                text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'dateDepot')::timestamptz"),
+                text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'datePublication')::timestamptz"),
+                text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'datePublicationWeb')::timestamptz")
             ]
 
             conditions = []
@@ -51,27 +47,20 @@ class StockageDocument(_BaseStockage):
                     # coalesce : retourne la première condition non nulle, car une des date peut être absente
                     # *        : décompile la liste en arguments positionnels, ex (condition1, condition2, condition3,...)
                     .where(func.coalesce(*conditions))
-                    .order_by(text("payload -> 'document' ->> 'uid'"))
+                    .order_by(text("payload ->> 'uid'"))
             )
 
             documents_dict = session.execute(query).scalars().all()
 
         return documents_dict
     
-    def mettre_a_jour_et_enregistrer_documents(self) -> int:
-        self._mettre_a_jour()
-        with self.SessionLocal() as session:
-            total_documents = self._enregistrer_depuis_dossier(session, Document, batch_size=1000)
-            session.commit()
-        return total_documents
     
     # --- Private Functions
 
     @staticmethod
     def _extraire_date_document(document_json: dict, fuseau_horaire: ZoneInfo) -> None | datetime.date:
         chrono = (
-            document_json.get("document", {})
-                   .get("cycleDeVie", {})
+            document_json.get("cycleDeVie", {})
                    .get("chrono", {})
         )
         document_dates = [
@@ -84,7 +73,7 @@ class StockageDocument(_BaseStockage):
         for document_date in document_dates:
             if not document_date:
                 continue
-            date_time = StockageDocument._parse_isoaware(document_date)
+            date_time = RechercherDocuments._parse_isoaware(document_date)
             if date_time is None:
                 continue
             return date_time.astimezone(fuseau_horaire).date()
