@@ -1,6 +1,7 @@
 from fastapi import FastAPI, status
 from fastapi.responses import ORJSONResponse, JSONResponse
 
+from src.documentReponse import DocumentReponse
 from src.metier.organe.organe import Organe
 from src.metier.organe.traitementOrgane import TraitementOrgane
 from src.metier.document.document import Document
@@ -19,13 +20,34 @@ app = FastAPI(default_response_class=ORJSONResponse)
 # --- Documents
 
 @app.get(
-    "/v1/documents",
+    "/v1/documents/brut",
     response_model=list[Document],
     status_code=status.HTTP_200_OK,
 )
 def retournerDocumentsBrut( 
 ):
     return traitement_document.recuperer_documents()
+
+@app.get(
+    "/v1/documents",
+    response_model=list[DocumentReponse],
+    response_model_exclude_none=True,
+    status_code=status.HTTP_200_OK,
+)
+def retournerDocuments():
+    documents: list[Document] = traitement_document.recuperer_documents()
+    return [
+        DocumentReponse.model_validate(document.model_dump(mode="python", by_alias=True))
+        for document in documents
+    ]
+
+@app.post(
+    "/v1/documents",
+    status_code=status.HTTP_201_CREATED,
+)
+def enregistrerDocumentsBrut( 
+):
+    return traitement_document.enregistrer_documents()
 
 # --- Acteur
 
@@ -34,8 +56,16 @@ def retournerDocumentsBrut(
     response_model=Acteur,
     status_code=status.HTTP_200_OK,
 )
-def retournerActeur(uid: str) -> Acteur:
+def retournerActeurBrut(uid: str) -> Acteur:
     return traitement_acteur.recuperer_acteur(uid)
+
+@app.post(
+    "/v1/acteurs",
+    status_code=status.HTTP_201_CREATED,
+)
+def enregistrerActeursBrut( 
+):
+    return traitement_acteur.enregistrer_acteurs()
 
 # --- Organe
 
@@ -46,6 +76,14 @@ def retournerActeur(uid: str) -> Acteur:
 )
 def retournerOrgane(uid: str) -> Organe:
     return traitement_organe.recuperer_organe(uid)
+
+@app.post(
+    "/v1/organes",
+    status_code=status.HTTP_201_CREATED,
+)
+def enregistrerOrganesBrut( 
+):
+    return traitement_organe.enregistrer_organes()
 
 # --- Exceptions Handlers
 
@@ -74,4 +112,8 @@ def download_handler(_, exc: MiseAJourStockException):
 
 @app.exception_handler(LectureException)
 def read_handler(_, exc: LectureException):
+    return _json_error(str(exc), status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@app.exception_handler(Exception)
+def general_handler(_, exc: Exception):
     return _json_error(str(exc), status.HTTP_500_INTERNAL_SERVER_ERROR)

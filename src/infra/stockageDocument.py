@@ -1,11 +1,12 @@
 from __future__ import annotations
-import logging
-from datetime import datetime, timedelta
-from pathlib import Path
-from zoneinfo import ZoneInfo
-import json
 
-from src.infra.infrastructureException import LectureException
+import logging
+
+from sqlalchemy import select, func, text, cast, DATE
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+from src.infra.models import Document
 from src.infra._baseStockage import _BaseStockage
 
 logger = logging.getLogger(__name__)
@@ -18,43 +19,53 @@ class StockageDocument(_BaseStockage):
             nom_dossier="document",
             url= "http://data.assemblee-nationale.fr/static/openData/repository/17/loi/dossiers_legislatifs/Dossiers_Legislatifs.json.zip"
     )
-    
-    def recuperer_documents_recents(self) -> list[dict]:
+
+    def recuperer_documents_semaine_courante(self) -> list[dict]: 
+        """
+        Récupère les documents dont la date (création/dépôt/publication/web) se situe dans les 7 derniers jours
+        """
         fuseau_horaire = ZoneInfo("Europe/Paris")      
         date_du_jour = datetime.now(fuseau_horaire).date()
+        six_jours_avant = date_du_jour - timedelta(days=6)
 
-        trois_jour_avant_date_du_jour = date_du_jour - timedelta(days=3)
-        trois_jours_après_date_du_jour = date_du_jour + timedelta(days=3)
+        with self.SessionLocal() as session:
+            # ->       : extrait une valeur de type JSONB (par clé ou index)
+            # ->>      : extrait une valeur de type text (par clé ou index)
+            # ::[type] : notation de cast postgresql (ici en timestamptz)
+            timestamps = [
+                text("(payload -> 'document' -> 'cycle de vie' -> 'chrono' ->> 'dateCreation')::timestamptz"),
+                text("(payload -> 'document' -> 'cycleDeVie' -> 'chrono' ->> 'dateDepot')::timestamptz"),
+                text("(payload -> 'document' -> 'cycleDeVie' -> 'chrono' ->> 'datePublication')::timestamptz"),
+                text("(payload -> 'document' -> 'cycleDeVie' -> 'chrono' ->> 'datePublicationWeb')::timestamptz")
+            ]
 
-        documents_dict: list[dict] = []
+            conditions = []
 
-        for fichier in self._iterer_dans_tous_le_dossier(self.chemin_dossier_dezippé):
-            try:
-                with fichier.open("r", encoding="utf-8") as document_json:
-                    document_dict = json.load(document_json)
+            for timestamp in timestamps:
+               conditions.append(
+                    cast(timestamp, DATE).between(six_jours_avant, date_du_jour)
+                )
+            
+            query = (
+                select(Document.payload)
+                    # coalesce : retourne la première condition non nulle, car une des date peut être absente
+                    # *        : décompile la liste en arguments positionnels, ex (condition1, condition2, condition3,...)
+                    .where(func.coalesce(*conditions))
+                    .order_by(text("payload -> 'document' ->> 'uid'"))
+            )
 
-                date_document = self._extraire_date_document(document_dict, fuseau_horaire=fuseau_horaire)
-                if date_document is None:
-                    continue
-
-                if trois_jour_avant_date_du_jour <= date_document <= trois_jours_après_date_du_jour:
-                    documents_dict.append(document_dict)
-
-            except Exception as e:
-                logger.exception("Fichier JSON illisible ou invalide: %s", fichier)
-                raise LectureException ("Impossible de récupérer le document %s", self.chemin_dossier_dezippé) from e
+            documents_dict = session.execute(query).scalars().all()
 
         return documents_dict
-
+    
+    def mettre_a_jour_et_enregistrer_documents(self) -> int:
+        self._mettre_a_jour()
+        with self.SessionLocal() as session:
+            total_documents = self._enregistrer_depuis_dossier(session, Document, batch_size=1000)
+            session.commit()
+        return total_documents
+    
     # --- Private Functions
-
-    @staticmethod
-    def _iterer_dans_tous_le_dossier(chemin_racine: Path):
-        if not chemin_racine.exists():
-            return []
-        for fichier in chemin_racine.rglob("*.json"):
-            if fichier.is_file():
-                yield fichier
 
     @staticmethod
     def _extraire_date_document(document_json: dict, fuseau_horaire: ZoneInfo) -> None | datetime.date:

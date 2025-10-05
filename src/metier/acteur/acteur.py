@@ -155,3 +155,7 @@ class Acteur(BaseModel):
 
 def parse_acteur_depuis_fichier_json(donnée: Dict[str, Any]) -> Acteur:
     return Acteur.model_validate(donnée["acteur"])
+
+def parse_acteur_depuis_payload(data: Dict[str, Any]) -> Acteur:
+    payload = data.get("acteur", data)
+    return Acteur.model_validate(payload)
