@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from json import loads
 from typing import Optional, Any, List
 from typing_extensions import Annotated

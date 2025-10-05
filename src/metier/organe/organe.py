@@ -25,6 +25,6 @@ class Organe(BaseModel):
     organePrecedentRef: Optional[str] = None
 
 
-def parse_organe_depuis_fichier_json(data: Dict[str, Any]) -> Organe:
+def parse_organe_depuis_payload(data: Dict[str, Any]) -> Organe:
     payload = data.get("organe", data)
     return Organe.model_validate(payload)
