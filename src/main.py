@@ -1,4 +1,5 @@
 from fastapi import FastAPI, status
+from fastapi.params import Query
 from fastapi.responses import ORJSONResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -63,8 +64,14 @@ def enregistrer_documents():
     response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
 )
-def retourner_acteur(uid: str):
-    acteur: Acteur = recuperer_acteur(uid)
+def retourner_acteur(
+    uid: str,
+    legislature: str | None = Query(
+        default=None,
+        description="Numéro de legislature (ex: '17')."
+    )
+):
+    acteur: Acteur = recuperer_acteur(uid, legislature=legislature)
     return ActeurReponse.model_validate(
         acteur.model_dump(mode="python", by_alias=True)
     )

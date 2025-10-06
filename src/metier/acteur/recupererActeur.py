@@ -1,7 +1,7 @@
 import logging
 
 from pydantic import ValidationError
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from src.metier.organe.organe import Organe, parse_organe_depuis_payload
 from src.infra.acteur.rechercherActeur import RechercherActeur
@@ -10,7 +10,10 @@ from src.metier.acteur.acteur import Acteur, Mandat, Mandats, parse_acteur_depui
 
 logger = logging.getLogger(__name__)
 
-def recuperer_acteur(uid: str | None = None) -> Acteur:
+def recuperer_acteur(
+        uid: str | None = None,
+        legislature: Optional[str] = None
+) -> Acteur:
     rechercher_acteur = RechercherActeur()
 
     acteur_payload, organes_payload = rechercher_acteur.recuperer_acteur_par_uid(uid)
@@ -20,10 +23,20 @@ def recuperer_acteur(uid: str | None = None) -> Acteur:
     
     try:
         acteur: Acteur = parse_acteur_depuis_payload(acteur_payload)
+
+        mandats: List[Mandat] = (
+                acteur.mandats.mandat if (acteur.mandats and acteur.mandats.mandat) else []
+            )
+        
+        # On ne récupère que les mandats de groupes politiques pour le moment
+        mandats_filtrés = [mandat for mandat in mandats if (mandat.typeOrgane == "GP")]
+
+        if legislature:
+            mandats_filtrés = [mandat for mandat in mandats_filtrés if (mandat.legislature == legislature)]
         
         if not organes_payload:
             logger.warning("Aucun organe associé à l'acteur %s", uid)
-            return acteur
+            return acteur.model_copy(update={"mandats": Mandats(mandat=mandats_filtrés)})
                     
         organes: List[Organe] = [
             parse_organe_depuis_payload(organe_payload) for organe_payload in organes_payload or []
@@ -33,18 +46,20 @@ def recuperer_acteur(uid: str | None = None) -> Acteur:
             organe.uid: organe for organe in organes if organe and organe.uid
         }
         
-        mandats: List[Mandat] = acteur.mandats.mandat if (acteur.mandats and acteur.mandats.mandat) else []
         mandats_enrichis: List[Mandat] = []
             
-        for mandat in mandats:
+        for mandat in mandats_filtrés:
             organe_ref = mandat.organes.organeRef
 
             if mandat and mandat.organes and organe_ref:
                 detail = organes_uids.get(organe_ref)
-                organes_avec_detail = mandat.organes.model_copy(update={"detail": detail})
+                organes_avec_detail  = mandat.organes.model_copy(update={"detail": detail})
                 mandat = mandat.model_copy(update={"organes": organes_avec_detail})
                 
             mandats_enrichis.append(mandat)
+        
+        if legislature:
+            mandats_enrichis = [mandat for mandat in mandats_enrichis if (mandat.legislature == legislature)]
 
         acteur = acteur.model_copy(update={"mandats": Mandats(mandat=mandats_enrichis)})
         

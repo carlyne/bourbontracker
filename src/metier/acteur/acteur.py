@@ -172,6 +172,8 @@ class Mandat(BaseModel):
     uid: Optional[str] = None
     acteurRef: Optional[str] = None
     legislature: Optional[str] = None
+    # GP : Groupe Politique
+    # GE : Groupoe d'Etude
     typeOrgane: Optional[str] = None
     dateDebut: Optional[date] = None
     datePublication: Optional[date] = None

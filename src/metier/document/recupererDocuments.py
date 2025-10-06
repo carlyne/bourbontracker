@@ -25,7 +25,7 @@ def recuperer_documents_semaine_courante() -> list[Document]:
     cache_acteurs: Dict[str, object] = {}
     for acteur_uid in acteurs_uids:
         try:
-            cache_acteurs[acteur_uid] = recuperer_acteur(acteur_uid)
+            cache_acteurs[acteur_uid] = recuperer_acteur(acteur_uid, "17")
         except Exception:
             continue
 

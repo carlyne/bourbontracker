@@ -125,7 +125,7 @@ class MandatReponse(BaseModel):
     #uid: Optional[str] = None
     #acteurRef: Optional[str] = None
     legislature: Optional[str] = None
-    #typeOrgane: Optional[str] = None
+    typeOrgane: Optional[str] = None
     dateDebut: Optional[date] = None
     #datePublication: Optional[date] = None
     dateFin: Optional[date] = None
@@ -147,7 +147,7 @@ class MandatsReponse(BaseModel):
 class ActeurReponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
-    #uid: UidReponse
+    uid: UidReponse
     etatCivil: Optional[EtatCivilReponse] = None
     #profession: Optional[ProfessionReponse] = None
     url_fiche_acteur: Optional[HttpUrl] = Field(default=None, alias="uri_hatvp")
