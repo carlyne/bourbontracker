@@ -100,18 +100,18 @@ class ViMoDeReponse(BaseModel):
 class OrganeDetailReponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
-    uid: str
-    codeType: Optional[str] = None
+    #uid: str
+    #codeType: Optional[str] = None
     libelle: Optional[str] = None
-    viMoDe: Optional[ViMoDeReponse] = None
-    organeParent: Optional[str] = None
-    preseance: Optional[str] = None
-    organePrecedentRef: Optional[str] = None
+    #viMoDe: Optional[ViMoDeReponse] = None
+    #organeParent: Optional[str] = None
+    #preseance: Optional[str] = None
+    #organePrecedentRef: Optional[str] = None
 
 class OrganesReponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
-    organeRef: Optional[str] = None
+    #organeRef: Optional[str] = None
     detail: Optional[OrganeDetailReponse] = None
 
 class InfosQualiteReponse(BaseModel):
@@ -122,22 +122,22 @@ class InfosQualiteReponse(BaseModel):
 class MandatReponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
     
-    uid: Optional[str] = None
-    acteurRef: Optional[str] = None
+    #uid: Optional[str] = None
+    #acteurRef: Optional[str] = None
     legislature: Optional[str] = None
-    typeOrgane: Optional[str] = None
+    #typeOrgane: Optional[str] = None
     dateDebut: Optional[date] = None
-    datePublication: Optional[date] = None
+    #datePublication: Optional[date] = None
     dateFin: Optional[date] = None
-    preseance: Optional[str] = None
+    #preseance: Optional[str] = None
 
-    infosQualite: Optional[InfosQualiteReponse] = None
+    #infosQualite: Optional[InfosQualiteReponse] = None
     organes: Optional[OrganesReponse] = None
-    suppleants: Optional[SuppleantsReponse] = None
-    chambre: Optional[str] = None
-    election: Optional[ElectionReponse] = None
-    mandature: Optional[MandatureReponse] = None
-    collaborateurs: Optional[CollaborateursReponse] = None
+    #suppleants: Optional[SuppleantsReponse] = None
+    #chambre: Optional[str] = None
+    #election: Optional[ElectionReponse] = None
+    #mandature: Optional[MandatureReponse] = None
+    #collaborateurs: Optional[CollaborateursReponse] = None
 
 class MandatsReponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
@@ -147,8 +147,8 @@ class MandatsReponse(BaseModel):
 class ActeurReponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
-    uid: UidReponse
+    #uid: UidReponse
     etatCivil: Optional[EtatCivilReponse] = None
-    profession: Optional[ProfessionReponse] = None
+    #profession: Optional[ProfessionReponse] = None
     url_fiche_acteur: Optional[HttpUrl] = Field(default=None, alias="uri_hatvp")
     mandats: Optional[MandatsReponse] = None

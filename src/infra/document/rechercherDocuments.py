@@ -29,7 +29,7 @@ class RechercherDocuments(_BaseConnexionBdd):
             # ->>      : extrait une valeur de type text (par clé ou index)
             # ::[type] : notation de cast postgresql (ici en timestamptz)
             timestamps = [
-                text("(payload -> 'cycle de vie' -> 'chrono' ->> 'dateCreation')::timestamptz"),
+                text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'dateCreation')::timestamptz"),
                 text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'dateDepot')::timestamptz"),
                 text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'datePublication')::timestamptz"),
                 text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'datePublicationWeb')::timestamptz")

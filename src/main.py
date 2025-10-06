@@ -1,5 +1,6 @@
 from fastapi import FastAPI, status
 from fastapi.responses import ORJSONResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.metier.organe.recupererOrgane import recuperer_organe
 from src.metier.acteur.recupererActeur import recuperer_acteur
@@ -10,13 +11,25 @@ from src.metier.organe.organe import Organe
 from src.metier.organe.enregistrerOrgane import mettre_a_jour_organes
 from src.metier.document.document import Document
 from src.metier.acteur.acteur import Acteur
-from src.metier.document.recupererDocuments import recuperer_documents_semaine_courante_avec_acteurs
+from src.metier.document.recupererDocuments import recuperer_documents_semaine_courante
 from src.metier.document.enregistrerDocuments import mettre_a_jour_documents
 from src.metier.acteur.enregistrerActeurs import mettre_a_jour_acteurs
 from src.metier.applicationExceptions import DocumentIntrouvableException, ActeurIntrouvableException, OrganeIntrouvableException
 from src.infra.infrastructureException import MiseAJourStockException, LectureException
 
 app = FastAPI(default_response_class=ORJSONResponse)
+
+origins = [
+    "http://localhost:8081"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # --- Documents
@@ -28,7 +41,7 @@ app = FastAPI(default_response_class=ORJSONResponse)
     status_code=status.HTTP_200_OK,
 )
 def retourner_documents():
-    documents: list[Document] = recuperer_documents_semaine_courante_avec_acteurs()
+    documents: list[Document] = recuperer_documents_semaine_courante()
     return [
         DocumentReponse.model_validate(document.model_dump(mode="python", by_alias=True))
         for document in documents

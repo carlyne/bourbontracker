@@ -6,14 +6,7 @@ from src.metier.document.document import Auteur, Auteurs, Document
 from src.metier.document.document import parse_document_depuis_payload
 from src.infra.document.rechercherDocuments import RechercherDocuments
 
-def recuperer_documents_semaine_courante() -> list[Document] :  
-        rechercher_documents = RechercherDocuments()      
-        payloads: Sequence[dict] = rechercher_documents.recuperer_documents_semaine_courante()
-        if not payloads:
-            raise DocumentIntrouvableException("Aucun document trouvé")
-        return [parse_document_depuis_payload(payload) for payload in payloads]
-
-def recuperer_documents_semaine_courante_avec_acteurs() -> list[Document]:
+def recuperer_documents_semaine_courante() -> list[Document]:
     rechercher_documents = RechercherDocuments()
     payloads: Sequence[dict] = rechercher_documents.recuperer_documents_semaine_courante()
     if not payloads:

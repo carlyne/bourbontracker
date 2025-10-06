@@ -14,10 +14,10 @@ class ViMoDeReponse(BaseModel):
 class OrganeReponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
 
-    uid: str
-    codeType: Optional[str] = None
+    #uid: str
+    #codeType: Optional[str] = None
     libelle: Optional[str] = None
     viMoDe: Optional[ViMoDeReponse] = None
-    organeParent: Optional[str] = None
-    preseance: Optional[str] = None
-    organePrecedentRef: Optional[str] = None
+    #organeParent: Optional[str] = None
+    #preseance: Optional[str] = None
+    #organePrecedentRef: Optional[str] = None
