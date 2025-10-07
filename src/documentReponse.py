@@ -77,7 +77,7 @@ class OrganesReferentsReponse(BaseModel):
 class DocumentReponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    #uid: Optional[str] = None
+    uid: Optional[str] = None
     legislature: Optional[str] = None
     cycleDeVie: Optional[CycleDeVieReponse] = None
     #denominationStructurelle: Optional[str] = None
