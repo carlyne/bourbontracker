@@ -31,6 +31,10 @@ def recuperer_acteur(
         # On ne récupère que les mandats de groupes politiques pour le moment
         mandats_filtrés = [mandat for mandat in mandats if (mandat.typeOrgane == "GP")]
 
+        if not mandats_filtrés:
+            logger.warning("Acteur %s non représenté par un groupe politique", uid )
+            raise ActeurIntrouvableException(f"l'Acteur avec uid='{uid}' n'est pas dans un groupe politique")
+
         if legislature:
             mandats_filtrés = [mandat for mandat in mandats_filtrés if (mandat.legislature == legislature)]
         

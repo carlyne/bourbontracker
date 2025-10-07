@@ -25,7 +25,7 @@ def recuperer_documents_semaine_courante() -> list[Document]:
     cache_acteurs: Dict[str, object] = {}
     for acteur_uid in acteurs_uids:
         try:
-            cache_acteurs[acteur_uid] = recuperer_acteur(acteur_uid, "17")
+            cache_acteurs[acteur_uid] = recuperer_acteur(acteur_uid)
         except Exception:
             continue
 
@@ -39,9 +39,14 @@ def recuperer_documents_semaine_courante() -> list[Document]:
         for auteur in auteurs:
             if auteur and auteur.acteur and auteur.acteur.acteurRef:
                 detail = cache_acteurs.get(auteur.acteur.acteurRef)
+                if not detail:
+                    continue
                 acteur_mod = auteur.acteur.model_copy(update={"acteur_detail": detail})
                 auteur = auteur.model_copy(update={"acteur": acteur_mod})
             auteurs_enrichis.append(auteur)
+
+        if not auteurs_enrichis:
+            continue
 
         auteurs_wrapped = document.auteurs.model_copy(update={"auteur": auteurs_enrichis}) if document.auteurs else Auteurs(auteur=auteurs_enrichis)
         document_enrichi = document.model_copy(update={"auteurs": auteurs_wrapped})
