@@ -28,5 +28,5 @@ class Organe(BaseModel):
     organePrecedentRef: Optional[str] = None
 
 
-def parse_organe_depuis_payload(data: Dict[str, Any]) -> Organe:
+def parser_organe_depuis_payload(data: Dict[str, Any]) -> Organe:
     return _utilitaire.parser_depuis_payload(data, Organe, "organe")

@@ -1,7 +1,7 @@
 import logging
 from pydantic import ValidationError
 
-from src.metier.organe.organe import Organe, parse_organe_depuis_payload
+from src.metier.organe.organe import Organe, parser_organe_depuis_payload
 from src.infra.organe.rechercherOrgane import RechercherOrgane
 from src.metier.applicationExceptions import OrganeIntrouvableException
 
@@ -15,7 +15,7 @@ def recuperer_organe(uid: str | None = None) -> Organe:
         raise OrganeIntrouvableException(f"Organe introuvable pour uid='{uid}'")
     
     try:
-        return parse_organe_depuis_payload(organe_payload)
+        return parser_organe_depuis_payload(organe_payload)
     
     except ValidationError as e: 
         logger.error("Erreur de validation pour le fichier Organe avec uid=%s : %s", uid, e)

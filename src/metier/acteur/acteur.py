@@ -189,5 +189,5 @@ class Acteur(BaseModel):
     def _nilable_url(cls, v):
         return _utilitaire.nil_ou_text(v)
 
-def parse_acteur_depuis_payload(data: Dict[str, Any]) -> Acteur:
+def parser_acteur_depuis_payload(data: Dict[str, Any]) -> Acteur:
     return _utilitaire.parser_depuis_payload(data, Acteur, "acteur")
