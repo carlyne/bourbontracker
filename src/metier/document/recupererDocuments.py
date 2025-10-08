@@ -1,4 +1,4 @@
-from typing import Dict, List, Sequence, Set
+from typing import Dict, Iterable, List, Sequence, Set
 
 from src.metier.acteur.recupererActeur import recuperer_acteur
 from src.metier.applicationExceptions import DocumentIntrouvableException
@@ -7,50 +7,90 @@ from src.metier.document.document import parse_document_depuis_payload
 from src.infra.document.rechercherDocuments import RechercherDocuments
 
 def recuperer_documents_semaine_courante() -> list[Document]:
+    documents = _recuperer_documents_semaine_courante()
+    acteurs = _charger_acteurs(_collecter_acteurs_uids(documents))
+    return _enrichir_documents(documents, acteurs)
+
+
+def _recuperer_documents_semaine_courante() -> Sequence[dict]:
     rechercher_documents = RechercherDocuments()
-    payloads: Sequence[dict] = rechercher_documents.recuperer_documents_semaine_courante()
+    payloads = rechercher_documents.recuperer_documents_semaine_courante()
+
     if not payloads:
         raise DocumentIntrouvableException("Aucun document trouvé")
+    
+    return [parse_document_depuis_payload(payload) for payload in payloads]    
 
-    documents: list[Document] = [parse_document_depuis_payload(payload) for payload in payloads]
+def _collecter_acteurs_uids(documents: Iterable[Document]) -> Set[str]:
+    acteur_uids: Set[str] = set()
 
-    acteurs_uids: Set[str] = set()
     for document in documents:
-        auteurs = (document.auteurs.auteur if (document.auteurs and document.auteurs.auteur) else [])
+        for auteur in _extraire_auteurs(document):
+            acteur_ref = getattr(getattr(auteur, "acteur", None), "acteurRef", None)
+            if acteur_ref:
+                acteur_uids.add(acteur_ref)
 
-        for auteur in auteurs:
-            if auteur and auteur.acteur and auteur.acteur.acteurRef:
-                acteurs_uids.add(auteur.acteur.acteurRef)
+    return acteur_uids
 
-    cache_acteurs: Dict[str, object] = {}
-    for acteur_uid in acteurs_uids:
+def _extraire_auteurs(document: Document) -> List[Auteur]:
+    if document.auteurs and document.auteurs.auteur:
+        return list(document.auteurs.auteur)
+    return []
+
+def _charger_acteurs(acteur_uids: Iterable[str]) -> Dict[str, object]:
+    cache: Dict[str, object] = {}
+
+    for acteur_uid in acteur_uids:
         try:
-            cache_acteurs[acteur_uid] = recuperer_acteur(acteur_uid)
+            cache[acteur_uid] = recuperer_acteur(acteur_uid)
         except Exception:
             continue
 
+    return cache
+
+def _enrichir_documents(
+        documents: Iterable[Document], 
+        acteurs: Dict[str, object]
+) -> list[Document]:
     documents_enrichis: list[Document] = []
 
     for document in documents:
-        auteurs = (document.auteurs.auteur if (document.auteurs and document.auteurs.auteur) else [])
-        
-        auteurs_enrichis: List[Auteur] = []
-
-        for auteur in auteurs:
-            if auteur and auteur.acteur and auteur.acteur.acteurRef:
-                detail = cache_acteurs.get(auteur.acteur.acteurRef)
-                if not detail:
-                    continue
-                acteur_mod = auteur.acteur.model_copy(update={"acteur_detail": detail})
-                auteur = auteur.model_copy(update={"acteur": acteur_mod})
-            auteurs_enrichis.append(auteur)
+        auteurs_enrichis = _enrichir_auteurs(document, acteurs)
 
         if not auteurs_enrichis:
             continue
+        auteurs_wrapped = (
+            document.auteurs.model_copy(update={"auteur": auteurs_enrichis})
+            if document.auteurs
+            else Auteurs(auteur=auteurs_enrichis)
+        )
 
-        auteurs_wrapped = document.auteurs.model_copy(update={"auteur": auteurs_enrichis}) if document.auteurs else Auteurs(auteur=auteurs_enrichis)
-        document_enrichi = document.model_copy(update={"auteurs": auteurs_wrapped})
-        documents_enrichis.append(document_enrichi)
+        documents_enrichis.append(
+            document.model_copy(update={"auteurs": auteurs_wrapped})
+        )
 
     return documents_enrichis
 
+def _enrichir_auteurs(
+        document: Document, 
+        acteurs: Dict[str, object]
+) -> List[Auteur]:
+    auteurs_enrichis: List[Auteur] = []
+
+    for auteur in _extraire_auteurs(document):
+        acteur_ref = getattr(getattr(auteur, "acteur", None), "acteurRef", None)
+        if not acteur_ref:
+            auteurs_enrichis.append(auteur)
+            continue
+
+        detail = acteurs.get(acteur_ref)
+        if not detail:
+            continue
+
+        acteur_mod = auteur.acteur.model_copy(update={"acteur_detail": detail})
+
+        auteurs_enrichis.append(
+            auteur.model_copy(update={"acteur": acteur_mod})
+        )
+        
+    return auteurs_enrichis
