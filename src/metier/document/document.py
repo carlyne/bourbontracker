@@ -1,19 +1,16 @@
 from __future__ import annotations
 
-from json import loads
-from typing import Dict, Optional, Any, List
+from typing import Any, Dict, List, Optional
 from typing_extensions import Annotated
-from pydantic import BaseModel, Field, ConfigDict, AwareDatetime
+
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 from pydantic.functional_validators import BeforeValidator
 
 from src.metier.acteur.acteur import Acteur as ActeurMetier
+from src.metier import _utilitaire
 
-def _to_list(v):
-    if v is None:
-        return []
-    return v if isinstance(v, list) else [v]
+_TransformerEnListe = BeforeValidator(_utilitaire.transformer_en_liste)
 
-ListNorm = Annotated[List[Any], BeforeValidator(_to_list)]
 AwareDateTimeOrNone = Optional[AwareDatetime]
 
 class Depot(BaseModel):
@@ -71,7 +68,7 @@ class Auteur(BaseModel):
     acteur: Optional[Acteur] = None
 
 class Auteurs(BaseModel):
-    auteur: Annotated[List[Auteur], BeforeValidator(_to_list)] = []
+    auteur: Annotated[List[Auteur], _TransformerEnListe] = Field(default_factory=list)
 
 class Notice(BaseModel):
     numNotice: Optional[str] = None
@@ -100,5 +97,4 @@ class Document(BaseModel):
     indexation: Optional[Any] = None
 
 def parse_document_depuis_payload(data: Dict[str, Any]) -> Document:
-    payload = data.get("document", data)
-    return Document.model_validate(payload)
+    return _utilitaire.parser_depuis_payload(data, Document, "document")

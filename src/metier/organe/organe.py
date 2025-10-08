@@ -1,7 +1,10 @@
 from __future__ import annotations
 from datetime import date
 from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, ConfigDict
+
+from src.metier import _utilitaire
 
 class ViMoDe(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
@@ -26,5 +29,4 @@ class Organe(BaseModel):
 
 
 def parse_organe_depuis_payload(data: Dict[str, Any]) -> Organe:
-    payload = data.get("organe", data)
-    return Organe.model_validate(payload)
+    return _utilitaire.parser_depuis_payload(data, Organe, "organe")

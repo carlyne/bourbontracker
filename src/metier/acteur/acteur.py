@@ -5,23 +5,7 @@ from typing import Any, Dict, Optional, List
 from pydantic import BaseModel, Field, ConfigDict, HttpUrl, field_validator
 
 from src.metier.organe.organe import Organe
-
-def _nil_or_text(v: Any) -> Optional[str]:
-    if v is None:
-        return None
-    if isinstance(v, str):
-        s = v.strip()
-        return s or None
-    if isinstance(v, dict):
-        if str(v.get("@xsi:nil", "")).lower() == "true":
-            return None
-        for k in ("#text", "text", "value"):
-            val = v.get(k)
-            if isinstance(val, str):
-                s = val.strip()
-                if s:
-                    return s
-    return None
+from src.metier import _utilitaire
 
 
 class Uid(BaseModel):
@@ -46,7 +30,7 @@ class InfoNaissance(BaseModel):
     @field_validator("villeNais", "depNais", "paysNais", mode="before")
     @classmethod
     def _nilable_str(cls, v):
-        return _nil_or_text(v)
+        return _utilitaire.nil_ou_text(v)
 
 
 class DateDeces(BaseModel):
@@ -77,7 +61,7 @@ class SocProcINSEE(BaseModel):
     @field_validator("catSocPro", "famSocPro", mode="before")
     @classmethod
     def _nilable_str(cls, v):
-        return _nil_or_text(v)
+        return _utilitaire.nil_ou_text(v)
 
 
 class Profession(BaseModel):
@@ -88,7 +72,7 @@ class Profession(BaseModel):
     @field_validator("libelleCourant", mode="before")
     @classmethod
     def _nilable_str(cls, v):
-        return _nil_or_text(v)
+        return _utilitaire.nil_ou_text(v)
 
 
 # ---------- Mandats
@@ -146,11 +130,7 @@ class Suppleants(BaseModel):
     @field_validator("suppleant", mode="before")
     @classmethod
     def _coerce_list(cls, v):
-        if v is None:
-            return []
-        if isinstance(v, list):
-            return v
-        return [v]
+        return _utilitaire.transformer_en_liste(v)
 
 
 class InfosQualite(BaseModel):
@@ -207,8 +187,7 @@ class Acteur(BaseModel):
     @field_validator("url_fiche_acteur", mode="before")
     @classmethod
     def _nilable_url(cls, v):
-        return _nil_or_text(v)
+        return _utilitaire.nil_ou_text(v)
 
 def parse_acteur_depuis_payload(data: Dict[str, Any]) -> Acteur:
-    payload = data.get("acteur", data)
-    return Acteur.model_validate(payload)
+    return _utilitaire.parser_depuis_payload(data, Acteur, "acteur")
