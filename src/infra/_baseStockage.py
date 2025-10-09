@@ -4,6 +4,7 @@ import requests
 import logging
 import json
 import tempfile
+import os
 
 from pathlib import Path
 from typing import BinaryIO, Iterable, Iterator, Mapping, Type
@@ -25,8 +26,7 @@ class _BaseStockage(_BaseConnexionBdd):
     ) -> None:
 
         self.nom_dossier: str = nom_dossier
-        self.chemin_racine: Path = Path("docs").resolve()
-        self.chemin_racine.mkdir(parents=True, exist_ok=True)
+        self.chemin_racine: Path = self._initialiser_chemin_racine()
 
         self.chemin_zip: Path = self.chemin_racine / nom_dossier_zip
         self.dossier_dezippé: Path = self.chemin_racine / nom_dossier
@@ -48,9 +48,30 @@ class _BaseStockage(_BaseConnexionBdd):
                     raise
                 base.mkdir(parents=True, exist_ok=True)
         except Exception:
-            logger.exception("Réinitialisation de %s échouée", base) 
+            logger.exception("Réinitialisation de %s échouée", base)
 
     # --- Private functions
+
+    def _initialiser_chemin_racine(self) -> Path:
+        chemin_configuré = os.environ.get("STOCKAGE_RACINE", "docs")
+        chemin = Path(chemin_configuré)
+
+        if not chemin.is_absolute():
+            chemin = Path.cwd() / chemin
+
+        try:
+            chemin.mkdir(parents=True, exist_ok=True)
+            return chemin
+        except PermissionError:
+            chemin_temporaire = Path(tempfile.gettempdir()) / chemin.name
+            chemin_temporaire.mkdir(parents=True, exist_ok=True)
+            logger.warning(
+                "Impossible de créer le dossier %s (PermissionError). Utilisation du dossier temporaire %s.",
+                chemin,
+                chemin_temporaire,
+            )
+            return chemin_temporaire
+
 
     def _mettre_a_jour(self) -> list[Path]:
         try:
