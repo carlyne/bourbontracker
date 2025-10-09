@@ -21,8 +21,13 @@ class MettreAJourStockDocuments(_BaseStockage):
     def _mettre_a_jour_stock(self) -> int:
         self._mettre_a_jour()
         with self.SessionLocal() as session:
-            total_documents = self._enregistrer_depuis_dossier(session, Document, batch_size=1000)
-            session.commit()
+            try:
+                total_documents = self._enregistrer_depuis_dossier(session, Document, batch_size=1000)
+                session.commit()
+            except Exception:
+                session.rollback()
+                logger.exception("Rollback de la transaction en raison d'une erreur lors de la mise à jour des documents")
+                raise
         return total_documents
     
     
