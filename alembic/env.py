@@ -1,8 +1,6 @@
-import asyncio
 from logging.config import fileConfig
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 import os
 
@@ -12,7 +10,7 @@ from src.infra.models import Models
 # access to the values within the .ini file in use.
 config = context.config
 
-db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost:5433/assemblee")
+db_url = os.getenv("DATABASE_URL", "postgresql+psycopg2://user:pass@localhost:5433/assemblee")
 config.set_main_option("sqlalchemy.url", db_url)
 
 # Interpret the config file for Python logging.
@@ -63,28 +61,19 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 
-async def run_async_migrations() -> None:
-    """In this scenario we need to create an Engine
-    and associate a connection with the context.
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
 
-    """
-
-    connectable = async_engine_from_config(
+    connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+    with connectable.connect() as connection:
+        do_run_migrations(connection)
 
-    await connectable.dispose()
-
-
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-
-    asyncio.run(run_async_migrations())
+    connectable.dispose()
 
 
 if context.is_offline_mode():
