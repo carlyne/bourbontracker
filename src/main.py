@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import ORJSONResponse, RedirectResponse
 
 from src.api import gestionnaireDesExceptions
 from src.api.routes import routesActeurs, routesDocuments, routesOrganes
@@ -31,12 +31,15 @@ def creer_application(cors_origins_autorisées: Sequence[str] | None = None) -> 
     app = FastAPI(default_response_class=ORJSONResponse)
 
     _configurer_cors(app, cors_origins_autorisées or settings.effective_cors_allowed_origins)
-
     _enregistrer_les_routes(app)
 
-    gestionnaireDesExceptions.enregistrer_réponses_par_type_d_exceptions(app)
+    @app.get("/", include_in_schema=False)
+    def root():
+        return RedirectResponse(url="/docs")
 
+    gestionnaireDesExceptions.enregistrer_réponses_par_type_d_exceptions(app)
     return app
+
 
 
 app = creer_application()
