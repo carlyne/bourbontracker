@@ -8,9 +8,9 @@ import os
 
 from pathlib import Path
 from typing import BinaryIO, Iterable, Iterator, Mapping, Type
-from sqlalchemy.orm import sessionmaker, DeclarativeMeta, Session as SASession
+from sqlalchemy.orm import DeclarativeMeta, Session as SASession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy import create_engine, func
+from sqlalchemy import func
 
 from src.infra._baseConnexionBdd import _BaseConnexionBdd
 from src.infra.infrastructureException import MiseAJourStockException
@@ -24,6 +24,8 @@ class _BaseStockage(_BaseConnexionBdd):
             nom_dossier: str, 
             url: str
     ) -> None:
+        
+        super().__init__()
 
         self.nom_dossier: str = nom_dossier
         self.chemin_racine: Path = self._initialiser_chemin_racine()
@@ -32,9 +34,6 @@ class _BaseStockage(_BaseConnexionBdd):
         self.dossier_dezippé: Path = self.chemin_racine / nom_dossier
 
         self.url: str = url
-
-        self.engine = create_engine("postgresql+psycopg2://user:pass@localhost:5433/assemblee", future=True)
-        self.SessionLocal = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)
     
     def vider_dossier_racine(self) -> None:
         base = Path(self.chemin_racine).resolve()

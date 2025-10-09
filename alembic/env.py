@@ -5,13 +5,13 @@ from alembic import context
 import os
 
 from src.infra.models import Models
+from src.settings import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-db_url = os.getenv("DATABASE_URL", "postgresql+psycopg2://user:pass@localhost:5433/assemblee")
-config.set_main_option("sqlalchemy.url", db_url)
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

@@ -20,9 +20,9 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("APP_ENVIRONMENT", "ENVIRONMENT"),
     )
     database_url: str = Field(
-        default="postgresql+psycopg2://user:pass@localhost:5433/assemblee",
+        ...,
         description="URL de connexion SQLAlchemy (sync) vers PostgreSQL.",
-        validation_alias=AliasChoices("APP_DATABASE_URL", "DATABASE_URL"),
+        validation_alias="DATABASE_URL",
     )
     cors_allowed_origins: list[str] = Field(
         default_factory=list,
