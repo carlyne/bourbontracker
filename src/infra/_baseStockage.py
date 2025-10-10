@@ -11,6 +11,7 @@ from typing import BinaryIO, Iterable, Iterator, Mapping, Type
 from sqlalchemy.orm import DeclarativeMeta, Session as SASession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.infra._baseConnexionBdd import _BaseConnexionBdd
 from src.infra.infrastructureException import MiseAJourStockException
@@ -99,26 +100,34 @@ class _BaseStockage(_BaseConnexionBdd):
             try:
                 with fichier.open("r", encoding="utf-8") as contenu:
                     payload: dict = json.load(contenu)
-
-                uid = self._extraire_uid(payload)
-
-                if not uid:
-                    # FIXME Logger le nom du fichier, etc...
-                    continue
-
-                batch.append({"uid": uid, "payload": payload.get(self.nom_dossier)})
-
-                if len(batch) >= batch_size:
-                    self._creer_ou_mettre_à_jour_en_base(session, batch, model)
-                    batch.clear()
-
-                compteur_total += 1
-
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 logger.exception("JSON illisible/invalide: %s", fichier)
+                continue
+
+            uid = self._extraire_uid(payload)
+
+            if not uid:
+                # FIXME Logger le nom du fichier, etc...
+                continue
+
+            batch.append({"uid": uid, "payload": payload.get(self.nom_dossier)})
+
+            if len(batch) >= batch_size:
+                try:
+                    self._creer_ou_mettre_à_jour_en_base(session, batch, model)
+                except SQLAlchemyError:
+                    logger.exception("Erreur SQL lors de l'enregistrement du batch contenant le fichier %s", fichier)
+                    raise
+                batch.clear()
+
+            compteur_total += 1
 
         if batch:
-            self._creer_ou_mettre_à_jour_en_base(session, batch, model)
+            try:
+                self._creer_ou_mettre_à_jour_en_base(session, batch, model)
+            except SQLAlchemyError:
+                logger.exception("Erreur SQL lors de l'enregistrement du dernier batch")
+                raise
 
         return compteur_total
 
