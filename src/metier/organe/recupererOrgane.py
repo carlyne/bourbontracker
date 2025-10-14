@@ -22,3 +22,19 @@ def recuperer_organe(uid: str | None = None) -> Organe:
         raise OrganeIntrouvableException(
             f"Organe invalide dans le fichier: {uid}.json"
         ) from e
+    
+def recuperer_organe_v2(uid: str | None = None) -> Organe:
+    rechercher_organe = RechercherOrgane()
+    organe_en_base = rechercher_organe.recuperer_organe_par_uid_v2(uid)
+
+    if organe_en_base is None:
+        raise OrganeIntrouvableException(f"Organe introuvable pour uid='{uid}'")
+
+    try:
+        return Organe.model_validate(organe_en_base)
+
+    except ValidationError as e:
+        logger.error("Erreur de validation pour l'organe avec uid=%s : %s", uid, e)
+        raise OrganeIntrouvableException(
+            f"Organe invalide en base pour uid='{uid}'"
+        ) from e

@@ -7,15 +7,15 @@ from pydantic import BaseModel, ConfigDict
 from src.metier import _utilitaire
 
 class ViMoDe(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, extra="ignore")
-
+    model_config = ConfigDict(populate_by_name=True, extra="ignore", from_attributes=True)
+    
     dateDebut: Optional[date] = None
     dateAgrement: Optional[date] = None
     dateFin: Optional[date] = None
 
 class Organe(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, extra="ignore")
-
+    model_config = ConfigDict(populate_by_name=True, extra="ignore", from_attributes=True)
+    
     uid: str
     codeType: Optional[str] = None
     libelle: Optional[str] = None

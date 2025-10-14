@@ -5,7 +5,7 @@ import logging
 from sqlalchemy import select
 
 from src.infra._baseConnexionBdd import _BaseConnexionBdd
-from src.infra.models import Organe
+from src.infra.models import Organe, OrganeV2
 
 logger = logging.getLogger(__name__)
 
@@ -25,3 +25,7 @@ class RechercherOrgane(_BaseConnexionBdd):
             organe_payload = organe_stocké[0]
 
             return organe_payload
+        
+    def recuperer_organe_par_uid_v2(self, uid: str) -> OrganeV2 | None:
+        with self.SessionLocal() as session:
+            return session.get(OrganeV2, uid) 

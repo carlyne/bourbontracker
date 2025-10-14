@@ -24,7 +24,7 @@ class MettreAJourStockActeurs(_BaseStockage):
         self._mettre_a_jour()
         with self.SessionLocal() as session:
             try:
-                total_acteurs = self._enregistrer_depuis_dossier(session, Acteur, batch_size=1000)
+                total_acteurs = self._enregistrer_depuis_dossier(session, Acteur, batch_size=100)
                 session.commit()
             except Exception:
                 session.rollback()

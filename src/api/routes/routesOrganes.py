@@ -2,7 +2,7 @@ from fastapi import APIRouter, status
 
 from src.metier.organe.organe import Organe
 from src.metier.organe.enregistrerOrgane import mettre_a_jour_organes
-from src.metier.organe.recupererOrgane import recuperer_organe
+from src.metier.organe.recupererOrgane import recuperer_organe_v2
 from src.api.routes.organeReponse import OrganeReponse
 
 router = APIRouter(prefix="/v1/organes", tags=["organes"])
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/v1/organes", tags=["organes"])
     status_code=status.HTTP_200_OK,
 )
 def retourne_organe(uid: str) -> OrganeReponse:
-    organe: Organe = recuperer_organe(uid)
+    organe: Organe = recuperer_organe_v2(uid)
     return OrganeReponse.model_validate(
         organe.model_dump(mode="python", by_alias=True)
     )
