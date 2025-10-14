@@ -113,8 +113,8 @@ class ActeurV2(Models):
     pays_naissance: Mapped[str | None] = mapped_column(String(255))
     date_deces: Mapped[date | None] = mapped_column(Date)
     profession_libelle: Mapped[str | None] = mapped_column(Text)
-    categorie_socio_professionnelle: Mapped[str | None] = mapped_column(String(50))
-    famille_socio_professionnelle: Mapped[str | None] = mapped_column(String(50))
+    categorie_socio_professionnelle: Mapped[str | None] = mapped_column(String(255))
+    famille_socio_professionnelle: Mapped[str | None] = mapped_column(String(255))
     url_fiche_acteur: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
@@ -148,7 +148,7 @@ class Mandat(Models):
     date_fin: Mapped[date | None] = mapped_column(Date)
     preseance: Mapped[str | None] = mapped_column(String(50))
     nomin_principale: Mapped[str | None] = mapped_column(String(255))
-    infos_qualite_code: Mapped[str | None] = mapped_column(String(50))
+    infos_qualite_code: Mapped[str | None] = mapped_column(String(255))
     infos_qualite_libelle: Mapped[str | None] = mapped_column(Text)
     infos_qualite_libelle_sexe: Mapped[str | None] = mapped_column(Text)
     chambre: Mapped[str | None] = mapped_column(String(50))
