@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload, selectinload
 
 from src.infra._baseConnexionBdd import _BaseConnexionBdd
-from src.infra.models import Acteur, Organe
+from src.infra.models import Acteur, ActeurV2, MandatV2, Organe, OrganeV2
 
 logger = logging.getLogger(__name__)
 
@@ -38,3 +39,30 @@ class RechercherActeur(_BaseConnexionBdd):
             ).scalars().all()
 
             return acteur_payload, organes_payloads
+
+    def recuperer_acteur_par_uid_v2(self, uid: str) -> tuple[ActeurV2 | None, list[OrganeV2]]:
+        """Récupère un acteur V2 avec ses mandats, collaborateurs, suppléants et organes associés."""
+
+        with self.SessionLocal() as session:
+            acteur = session.execute(
+                select(ActeurV2)
+                .options(
+                    selectinload(ActeurV2.mandats)
+                    .options(
+                        selectinload(MandatV2.collaborateurs),
+                        selectinload(MandatV2.suppleants),
+                        joinedload(MandatV2.organe),
+                    )
+                )
+                .where(ActeurV2.uid == uid)
+            ).scalar_one_or_none()
+
+            if acteur is None:
+                return None, []
+
+            organes_uniques: dict[str, OrganeV2] = {}
+            for mandat in acteur.mandats:
+                if mandat.organe is not None and mandat.organe.uid not in organes_uniques:
+                    organes_uniques[mandat.organe.uid] = mandat.organe
+
+            return acteur, list(organes_uniques.values())
