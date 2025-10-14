@@ -13,7 +13,7 @@ class RechercherActeur(_BaseConnexionBdd):
     def __init__(self):
         super().__init__()
 
-    def recuperer_acteur_par_uid(self, uid: str) -> tuple[dict, list[dict]]:
+    def recuperer_acteur_par_uid(self, uid: str) -> tuple[dict, list[Organe]]:
         """
         Récupère les données d'un Acteur à l'aide de son uid.
         Récupère également les organes associés s'il y en a
@@ -33,8 +33,8 @@ class RechercherActeur(_BaseConnexionBdd):
             if not organes_refs:
                 return acteur_payload, []
 
-            organes_payloads: list[dict] = session.execute(
-                select(Organe.payload).where(Organe.uid.in_(organes_refs))
+            organes_modeles: list[Organe] = session.execute(
+                select(Organe).where(Organe.uid.in_(organes_refs))
             ).scalars().all()
 
-            return acteur_payload, organes_payloads
+            return acteur_payload, organes_modeles

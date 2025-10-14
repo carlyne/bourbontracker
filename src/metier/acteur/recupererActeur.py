@@ -3,7 +3,7 @@ import logging
 from pydantic import ValidationError
 from typing import Dict, List, Optional
 
-from src.metier.organe.organe import Organe, parser_organe_depuis_payload
+from src.metier.organe.organe import Organe
 from src.infra.acteur.rechercherActeur import RechercherActeur
 from src.metier.applicationExceptions import ActeurIntrouvableException
 from src.metier.acteur.acteur import Acteur, Mandat, Mandats, parser_acteur_depuis_payload
@@ -16,7 +16,7 @@ def recuperer_acteur(
 ) -> Acteur:
     rechercher_acteur = RechercherActeur()
 
-    acteur_payload, organes_payload = rechercher_acteur.recuperer_acteur_par_uid(uid)
+    acteur_payload, organes_modeles = rechercher_acteur.recuperer_acteur_par_uid(uid)
 
     if not acteur_payload:
         raise ActeurIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
@@ -33,11 +33,11 @@ def recuperer_acteur(
 
         mandats = _filtrer_mandats_par_legislature(mandats, legislature)
 
-        if not organes_payload:
+        if not organes_modeles:
             logger.warning("Aucun organe associé à l'acteur %s", uid)
             return _mettre_a_jour_mandats(acteur, mandats)
 
-        mandats_enrichis = _enrichir_mandats_avec_détail_des_organes(mandats, organes_payload)
+        mandats_enrichis = _enrichir_mandats_avec_détail_des_organes(mandats, organes_modeles)
 
         return _mettre_a_jour_mandats(acteur, mandats_enrichis)
 
@@ -61,10 +61,21 @@ def _filtrer_mandats_par_legislature(
     return [mandat for mandat in mandats if mandat.legislature == legislature]
 
 def _enrichir_mandats_avec_détail_des_organes(
-        mandats: List[Mandat], 
-        organes_payload
+        mandats: List[Mandat],
+        organes_modeles
 ) -> List[Mandat]:
-    organes: List[Organe] = [parser_organe_depuis_payload(organe_payload) for organe_payload in organes_payload]
+    organes: List[Organe] = []
+
+    for organe_modele in organes_modeles:
+        try:
+            organes.append(Organe.model_validate(organe_modele))
+        except ValidationError as erreur:
+            logger.warning(
+                "Organe invalide %s ignoré lors de l'enrichissement des mandats: %s",
+                getattr(organe_modele, "uid", "?"),
+                erreur,
+            )
+
     organes_uids: Dict[str, Organe] = {organe.uid: organe for organe in organes if organe and organe.uid}
     mandats_enrichis: List[Mandat] = []
     
