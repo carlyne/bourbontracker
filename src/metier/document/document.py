@@ -70,6 +70,10 @@ class Auteur(BaseModel):
 class Auteurs(BaseModel):
     auteur: Annotated[List[Auteur], _TransformerEnListe] = Field(default_factory=list)
 
+
+class OrganesReferents(BaseModel):
+    organeRef: Annotated[List[str], _TransformerEnListe] = Field(default_factory=list)
+
 class Notice(BaseModel):
     numNotice: Optional[str] = None
     formule: Optional[str] = None
@@ -95,6 +99,7 @@ class Document(BaseModel):
     correction: Optional[Any] = None
     notice: Optional[Notice] = None
     indexation: Optional[Any] = None
+    organesReferents: Optional[OrganesReferents] = None
 
 def parse_document_depuis_payload(data: Dict[str, Any]) -> Document:
     return _utilitaire.parser_depuis_payload(data, Document, "document")

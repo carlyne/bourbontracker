@@ -1,0 +1,90 @@
+"""
+Add DocumentV2 and document_acteur tables
+
+Revision ID: 3a8b70c3f8a1
+Revises: 01457cb07296
+Create Date: 2025-10-20 00:00:00.000000
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+
+# revision identifiers, used by Alembic.
+revision: str = "3a8b70c3f8a1"
+down_revision: Union[str, None] = "01457cb07296"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    op.create_table(
+        "documentv2",
+        sa.Column("uid", sa.String(), nullable=False),
+        sa.Column("legislature", sa.String(length=50), nullable=True),
+        sa.Column("titre_principal", sa.Text(), nullable=True),
+        sa.Column("titre_principal_court", sa.Text(), nullable=True),
+        sa.Column("denomination_structurelle", sa.Text(), nullable=True),
+        sa.Column("provenance", sa.Text(), nullable=True),
+        sa.Column("notice_num_notice", sa.String(length=255), nullable=True),
+        sa.Column("notice_formule", sa.Text(), nullable=True),
+        sa.Column("notice_adoption_conforme", sa.Text(), nullable=True),
+        sa.Column("classification_famille_depot_code", sa.String(length=50), nullable=True),
+        sa.Column("classification_famille_depot_libelle", sa.Text(), nullable=True),
+        sa.Column("classification_famille_classe_code", sa.String(length=50), nullable=True),
+        sa.Column("classification_famille_classe_libelle", sa.Text(), nullable=True),
+        sa.Column("classification_famille_espece_code", sa.String(length=50), nullable=True),
+        sa.Column("classification_famille_espece_libelle", sa.Text(), nullable=True),
+        sa.Column("classification_famille_espece_libelle_edition", sa.Text(), nullable=True),
+        sa.Column("classification_type_code", sa.String(length=50), nullable=True),
+        sa.Column("classification_type_libelle", sa.Text(), nullable=True),
+        sa.Column("classification_sous_type_code", sa.String(length=50), nullable=True),
+        sa.Column("classification_sous_type_libelle", sa.Text(), nullable=True),
+        sa.Column("classification_sous_type_libelle_edition", sa.Text(), nullable=True),
+        sa.Column("classification_statut_adoption", sa.Text(), nullable=True),
+        sa.Column("date_creation", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("date_depot", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("date_publication", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("date_publication_web", sa.DateTime(timezone=True), nullable=True),
+        sa.Column(
+            "organes_referents",
+            postgresql.ARRAY(sa.String()),
+            server_default=sa.text("ARRAY[]::text[]"),
+            nullable=False,
+        ),
+        sa.Column("dossier_ref", sa.String(length=255), nullable=True),
+        sa.Column("redacteur", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.PrimaryKeyConstraint("uid"),
+    )
+    op.create_index("ix_documentv2_date_creation", "documentv2", ["date_creation"], unique=False)
+    op.create_index("ix_documentv2_date_depot", "documentv2", ["date_depot"], unique=False)
+    op.create_index("ix_documentv2_date_publication", "documentv2", ["date_publication"], unique=False)
+
+    op.create_table(
+        "document_acteur",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("document_uid", sa.String(), nullable=False),
+        sa.Column("acteur_uid", sa.String(), nullable=True),
+        sa.Column("acteur_ref", sa.String(length=255), nullable=True),
+        sa.Column("qualite", sa.String(length=255), nullable=True),
+        sa.Column("ordre", sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(["acteur_uid"], ["acteurv2.uid"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["document_uid"], ["documentv2.uid"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_document_acteur_acteur_uid", "document_acteur", ["acteur_uid"], unique=False)
+    op.create_index("ix_document_acteur_document_uid", "document_acteur", ["document_uid"], unique=False)
+
+
+def downgrade() -> None:
+    op.drop_index("ix_document_acteur_document_uid", table_name="document_acteur")
+    op.drop_index("ix_document_acteur_acteur_uid", table_name="document_acteur")
+    op.drop_table("document_acteur")
+
+    op.drop_index("ix_documentv2_date_publication", table_name="documentv2")
+    op.drop_index("ix_documentv2_date_depot", table_name="documentv2")
+    op.drop_index("ix_documentv2_date_creation", table_name="documentv2")
+    op.drop_table("documentv2")

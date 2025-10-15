@@ -4,8 +4,8 @@ from typing import Any
 from datetime import date, datetime
 from sqlalchemy import text, Computed, Index, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.types import Date, DateTime, String, Text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.types import Date, DateTime, Integer, String, Text
 
 class Models(DeclarativeBase):
     pass
@@ -124,6 +124,10 @@ class ActeurV2(Models):
         back_populates="acteur", cascade="all, delete-orphan"
     )
 
+    documents: Mapped[list["DocumentActeur"]] = relationship(
+        back_populates="acteur"
+    )
+
     __table_args__ = (
         Index("ix_acteurv2_nom", "nom"),
         Index("ix_acteurv2_prenom", "prenom"),
@@ -212,6 +216,80 @@ class Suppleant(Models):
     suppleant_uid: Mapped[str | None] = mapped_column(String(255))
 
     mandat: Mapped[Mandat] = relationship(back_populates="suppleants")
+
+
+class DocumentV2(Models):
+    __tablename__ = "documentv2"
+
+    uid: Mapped[str] = mapped_column(String, primary_key=True)
+    legislature: Mapped[str | None] = mapped_column(String(50))
+    titre_principal: Mapped[str | None] = mapped_column(Text)
+    titre_principal_court: Mapped[str | None] = mapped_column(Text)
+    denomination_structurelle: Mapped[str | None] = mapped_column(Text)
+    provenance: Mapped[str | None] = mapped_column(Text)
+    notice_num_notice: Mapped[str | None] = mapped_column(String(255))
+    notice_formule: Mapped[str | None] = mapped_column(Text)
+    notice_adoption_conforme: Mapped[str | None] = mapped_column(Text)
+    classification_famille_depot_code: Mapped[str | None] = mapped_column(String(50))
+    classification_famille_depot_libelle: Mapped[str | None] = mapped_column(Text)
+    classification_famille_classe_code: Mapped[str | None] = mapped_column(String(50))
+    classification_famille_classe_libelle: Mapped[str | None] = mapped_column(Text)
+    classification_famille_espece_code: Mapped[str | None] = mapped_column(String(50))
+    classification_famille_espece_libelle: Mapped[str | None] = mapped_column(Text)
+    classification_famille_espece_libelle_edition: Mapped[str | None] = mapped_column(Text)
+    classification_type_code: Mapped[str | None] = mapped_column(String(50))
+    classification_type_libelle: Mapped[str | None] = mapped_column(Text)
+    classification_sous_type_code: Mapped[str | None] = mapped_column(String(50))
+    classification_sous_type_libelle: Mapped[str | None] = mapped_column(Text)
+    classification_sous_type_libelle_edition: Mapped[str | None] = mapped_column(Text)
+    classification_statut_adoption: Mapped[str | None] = mapped_column(Text)
+    date_creation: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    date_depot: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    date_publication: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    date_publication_web: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    organes_referents: Mapped[list[str]] = mapped_column(
+        ARRAY(String), default_factory=list
+    )
+    dossier_ref: Mapped[str | None] = mapped_column(String(255))
+    redacteur: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=text("now()"), nullable=False
+    )
+
+    auteurs: Mapped[list["DocumentActeur"]] = relationship(
+        back_populates="document",
+        cascade="all, delete-orphan",
+        order_by="DocumentActeur.ordre",
+    )
+
+    __table_args__ = (
+        Index("ix_documentv2_date_creation", "date_creation"),
+        Index("ix_documentv2_date_depot", "date_depot"),
+        Index("ix_documentv2_date_publication", "date_publication"),
+    )
+
+
+class DocumentActeur(Models):
+    __tablename__ = "document_acteur"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    document_uid: Mapped[str] = mapped_column(
+        String, ForeignKey("documentv2.uid", ondelete="CASCADE"), nullable=False
+    )
+    acteur_uid: Mapped[str | None] = mapped_column(
+        String, ForeignKey("acteurv2.uid", ondelete="SET NULL"), nullable=True
+    )
+    acteur_ref: Mapped[str | None] = mapped_column(String(255))
+    qualite: Mapped[str | None] = mapped_column(String(255))
+    ordre: Mapped[int | None] = mapped_column(Integer)
+
+    document: Mapped[DocumentV2] = relationship(back_populates="auteurs")
+    acteur: Mapped[ActeurV2 | None] = relationship(back_populates="documents")
+
+    __table_args__ = (
+        Index("ix_document_acteur_document_uid", "document_uid"),
+        Index("ix_document_acteur_acteur_uid", "acteur_uid"),
+    )
 
 class Document(Models):
     __tablename__ = "document"
