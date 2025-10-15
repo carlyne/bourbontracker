@@ -13,6 +13,10 @@ _TransformerEnListe = BeforeValidator(_utilitaire.transformer_en_liste)
 
 AwareDateTimeOrNone = Optional[AwareDatetime]
 
+
+class OrganesReferents(BaseModel):
+    organeRef: Annotated[List[str], _TransformerEnListe] = Field(default_factory=list)
+
 class Depot(BaseModel):
     code: Optional[str] = None
     libelle: Optional[str] = None
@@ -95,6 +99,7 @@ class Document(BaseModel):
     correction: Optional[Any] = None
     notice: Optional[Notice] = None
     indexation: Optional[Any] = None
+    organesReferents: Optional[OrganesReferents] = None
 
 def parse_document_depuis_payload(data: Dict[str, Any]) -> Document:
     return _utilitaire.parser_depuis_payload(data, Document, "document")
