@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Any, Dict, Optional, List
-from pydantic import BaseModel, Field, ConfigDict, HttpUrl, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    ConfigDict,
+    HttpUrl,
+    field_validator,
+    FieldValidationInfo,
+)
 
 from src.metier.organe.organe import Organe
 from src.metier import _utilitaire
@@ -27,6 +34,11 @@ class InfoNaissance(BaseModel):
     depNais: Optional[str] = None
     paysNais: Optional[str] = None
 
+    @field_validator("dateNais", mode="before")
+    @classmethod
+    def _nilable_date(cls, v):
+        return _utilitaire.date_ou_none(v)
+
     @field_validator("villeNais", "depNais", "paysNais", mode="before")
     @classmethod
     def _nilable_str(cls, v):
@@ -35,8 +47,10 @@ class InfoNaissance(BaseModel):
 
 class DateDeces(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    
     xmlns_xsi: Optional[str] = Field(default=None, alias="@xmlns:xsi")
     xsi_nil: Optional[bool] = Field(default=None, alias="@xsi:nil")
+    value: Optional[date] = Field(default=None, alias="#text")
 
     @field_validator("xsi_nil", mode="before")
     @classmethod
@@ -44,6 +58,11 @@ class DateDeces(BaseModel):
         if isinstance(v, str):
             return v.lower() == "true"
         return v
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def _nilable_date(cls, v):
+        return _utilitaire.date_ou_none(v)
 
 
 class EtatCivil(BaseModel):
@@ -101,6 +120,11 @@ class Mandature(BaseModel):
     placeHemicycle: Optional[str] = None
     mandatRemplaceRef: Optional[str] = None
 
+    @field_validator("datePriseFonction", mode="before")
+    @classmethod
+    def _nilable_date(cls, v):
+        return _utilitaire.date_ou_none(v)
+
 
 class Collaborateur(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
@@ -110,10 +134,20 @@ class Collaborateur(BaseModel):
     dateDebut: Optional[date] = None
     dateFin: Optional[date] = None
 
+    @field_validator("dateDebut", "dateFin", mode="before")
+    @classmethod
+    def _nilable_date(cls, v):
+        return _utilitaire.date_ou_none(v)
+
 
 class Collaborateurs(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
     collaborateur: List[Collaborateur] = Field(default_factory=list)
+
+    @field_validator("collaborateur", mode="before")
+    @classmethod
+    def _coerce_list(cls, v):
+        return _utilitaire.transformer_en_liste(v)
 
 
 class Suppleant(BaseModel):
@@ -121,6 +155,11 @@ class Suppleant(BaseModel):
     dateDebut: Optional[date] = None
     dateFin: Optional[date] = None
     suppleantRef: Optional[str] = None
+
+    @field_validator("dateDebut", "dateFin", mode="before")
+    @classmethod
+    def _nilable_date(cls, v):
+        return _utilitaire.date_ou_none(v)
 
 
 class Suppleants(BaseModel):
@@ -144,6 +183,11 @@ class Organes(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
     organeRef: Optional[str] = None
     detail: Optional[Organe] = None
+
+    @field_validator("organeRef", mode="before")
+    @classmethod
+    def _nilable_str(cls, v):
+        return _utilitaire.nil_ou_text(v)
 
 
 class Mandat(BaseModel):
@@ -169,10 +213,34 @@ class Mandat(BaseModel):
     mandature: Optional[Mandature] = None
     collaborateurs: Optional[Collaborateurs] = None
 
+    @field_validator(
+        "dateDebut",
+        "datePublication",
+        "dateFin",
+        mode="before",
+    )
+    @classmethod
+    def _nilable_date(cls, v):
+        return _utilitaire.date_ou_none(v)
+
+    @field_validator("collaborateurs", "suppleants", mode="before")
+    @classmethod
+    def _coerce_nested_collections(cls, v, info: FieldValidationInfo):
+        if isinstance(v, list):
+            clé = "collaborateur" if info.field_name == "collaborateurs" else "suppleant"
+            valeurs = [element for element in v if element is not None]
+            return {clé: valeurs}
+        return v
+
 
 class Mandats(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
     mandat: List[Mandat] = Field(default_factory=list)
+
+    @field_validator("mandat", mode="before")
+    @classmethod
+    def _coerce_list(cls, v):
+        return _utilitaire.transformer_en_liste(v)
 
 
 class Acteur(BaseModel):
