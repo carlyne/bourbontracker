@@ -247,7 +247,7 @@ class DocumentV2(Models):
     date_publication: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     date_publication_web: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     organes_referents: Mapped[list[str]] = mapped_column(
-        ARRAY(String), default_factory=list
+        ARRAY(String), nullable=False, default=list
     )
     dossier_ref: Mapped[str | None] = mapped_column(String(255))
     redacteur: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
