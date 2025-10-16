@@ -226,7 +226,7 @@ class DocumentModel(Models):
     auteurs: Mapped[list["DocumentActeurModel"]] = relationship(
         back_populates="document",
         cascade="all, delete-orphan",
-        order_by="DocumentActeur.ordre",
+        order_by="DocumentActeurModel.ordre",
     )
 
     __table_args__ = (

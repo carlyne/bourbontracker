@@ -71,6 +71,16 @@ class EtatCivil(BaseModel):
     infoNaissance: Optional[InfoNaissance] = None
     dateDeces: Optional[DateDeces] = None
 
+    @field_validator("dateDeces", mode="before")
+    @classmethod
+    def _string_to_date_deces(cls, value: Any):
+        """Accepte un champ `dateDeces` fourni directement en chaîne ISO."""
+        if isinstance(value, str):
+            valeur_normalisee = value.strip()
+            if not valeur_normalisee:
+                return None
+            return {"#text": valeur_normalisee}
+        return value
 
 class SocProcINSEE(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
