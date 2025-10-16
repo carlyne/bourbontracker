@@ -18,7 +18,7 @@ class GestionnaireException:
     standardisée (code + format JSON), et de l’enregistrer dans une application (FastAPI).
     """
     def __init__(self):
-        self._définition_des_types_de_réponses = {
+        self._correspondances_entre_exception_et_code_réponse = {
             DocumentIntrouvableException: HTTPStatus.NOT_FOUND,
             ActeurIntrouvableException: HTTPStatus.NOT_FOUND,
             OrganeIntrouvableException: HTTPStatus.NOT_FOUND,
@@ -54,7 +54,7 @@ class GestionnaireException:
         Enregistre les handlers d’exception dans l’application pour que l'api renvoie la réponse souhaitée
         en cas d’exception interceptée.
         """
-        for type_exception, code_réponse in self._définition_des_types_de_réponses.items():
+        for type_exception, code_réponse in self._correspondances_entre_exception_et_code_réponse.items():
             app.add_exception_handler(
                 type_exception, 
                 self._construire_réponse_pour_cette_exception(code_réponse)
