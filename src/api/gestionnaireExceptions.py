@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import Type, Mapping
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
