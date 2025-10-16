@@ -82,55 +82,6 @@ class _BaseStockage(_BaseConnexionBdd):
             logger.error("Erreur lors de la mise à jour des données : %s", e, exc_info=True)
             raise MiseAJourStockException("Impossible de récupérer les données à jour du dossier %s", self.dossier_dezippé) from e
 
-    def _enregistrer_depuis_dossier(
-        self, 
-        session: SASession, 
-        model: Type[DeclarativeMeta],
-        batch_size: int = 1000,
-    ) -> int:
-        """
-        Lit tous les fichiers .json d'un dossier, extrait (uid:str, payload:dict) et met à jour ou créé en base.
-        'model' est l'ORM cible (Document, Acteur, Organe, ...).
-        Le traitement est fait en mode batch
-        """
-        compteur_total = 0
-        batch = []
-
-        for fichier in self._itérer_dans_le_dossier_dezippé():
-            try:
-                with fichier.open("r", encoding="utf-8") as contenu:
-                    payload: dict = json.load(contenu)
-            except (json.JSONDecodeError, OSError, ValueError):
-                logger.exception("JSON illisible/invalide: %s", fichier)
-                continue
-
-            uid = self._extraire_uid(payload)
-
-            if not uid:
-                # FIXME Logger le nom du fichier, etc...
-                continue
-
-            batch.append({"uid": uid, "payload": payload.get(self.nom_dossier)})
-
-            if len(batch) >= batch_size:
-                try:
-                    self._creer_ou_mettre_à_jour_en_base(session, batch, model)
-                except SQLAlchemyError:
-                    logger.exception("Erreur SQL lors de l'enregistrement du batch contenant le fichier %s", fichier)
-                    raise
-                batch.clear()
-
-            compteur_total += 1
-
-        if batch:
-            try:
-                self._creer_ou_mettre_à_jour_en_base(session, batch, model)
-            except SQLAlchemyError:
-                logger.exception("Erreur SQL lors de l'enregistrement du dernier batch")
-                raise
-
-        return compteur_total
-
     def _telecharger_dossier_zip(self):
         self.chemin_zip.parent.mkdir(parents=True, exist_ok=True)
 
@@ -189,44 +140,3 @@ class _BaseStockage(_BaseConnexionBdd):
         
         # yield : permet de traiter les fichiers en flux continue (méthode utilisée en mode batch)
         yield from (fichier for fichier in self.dossier_dezippé.rglob("*.json") if fichier.is_file())
-
-    def _creer_ou_mettre_à_jour_en_base(
-        self, 
-        session: SASession, 
-        lignes: Iterable[Mapping[str, object]], 
-        model: Type[DeclarativeMeta]
-    ) -> None:
-        lignes = list(lignes)
-        if not lignes:
-            return
-
-        query = pg_insert(model).values(lignes)
-
-        query = query.on_conflict_do_update(
-            index_elements=[model.uid],
-            set_={
-                "payload": query.excluded.payload,
-                "updated_at": func.now(),
-            }
-        )
-
-        session.execute(query)
-
-    def _extraire_uid(self, payload: dict) -> str | None:
-        donnée = payload.get(self.nom_dossier) or {}
-        uid_brut = donnée.get("uid")
-
-        if isinstance(uid_brut, str):
-            return uid_brut.strip() or None
-
-        if isinstance(uid_brut, dict):
-            for clé in ("#text", "text", "value"):
-                valeur = uid_brut.get(clé)
-                if isinstance(valeur, str) and valeur.strip():
-                    return valeur.strip()
-            
-            logger.warning("Le fichier n'a pas d'uid")
-            return None
-
-        logger.warning("Le fichier n'a pas d'uid")
-        return None

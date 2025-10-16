@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 from sqlalchemy import select, func, or_
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -38,7 +38,11 @@ class RechercherDocuments(_BaseConnexionBdd):
                     selectinload(DocumentModel.auteurs)
                     .joinedload(DocumentActeurModel.acteur)
                     .selectinload(ActeurModel.mandats)
-                    .joinedload(MandatModel.organe)
+                    .options(
+                        joinedload(MandatModel.organe),
+                        selectinload(MandatModel.collaborateurs),
+                        selectinload(MandatModel.suppleants),
+                    )
                 )
                 .where(or_(*conditions))
                 .order_by(DocumentModel.uid)
