@@ -19,11 +19,19 @@ class Settings(BaseSettings):
         description="Environnement de déploiement courant.",
         validation_alias=AliasChoices("APP_ENVIRONMENT", "ENVIRONMENT"),
     )
+
     database_url: str = Field(
         ...,
         description="URL de connexion SQLAlchemy (sync) vers PostgreSQL.",
         validation_alias="DATABASE_URL",
     )
+
+    port: str = Field(
+        ...,
+        description="Port",
+        validation_alias="PORT",
+    )
+
     cors_allowed_origins: list[str] = Field(
         default_factory=list,
         description="Origines autorisées pour le CORS.",
@@ -32,6 +40,7 @@ class Settings(BaseSettings):
             "CORS_ALLOWED_ORIGINS",
         ),
     )
+
     render_app_url: HttpUrl | None = Field(
         default="https://votre-service.onrender.com",
         description="URL publique de l'application lorsqu'elle est déployée sur Render.",
