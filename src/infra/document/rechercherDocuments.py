@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 
-from sqlalchemy import select, func, or_, text, cast, DATE
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from src.infra._baseConnexionBdd import _BaseConnexionBdd
-from src.infra.models import Document, DocumentV2, ActeurV2, DocumentActeur, Mandat
+from src.infra.models import DocumentModel, ActeurModel, DocumentActeurModel, MandatModel
 
 logger = logging.getLogger(__name__)
 
@@ -16,47 +16,9 @@ class RechercherDocuments(_BaseConnexionBdd):
     
     def __init__(self):
         super().__init__()
-
-    def recuperer_documents_semaine_courante(self) -> list[dict]: 
-        """
-        Récupère les documents dont la date (création/dépôt/publication/web) se situe dans les 7 derniers jours
-        """
-        fuseau_horaire = ZoneInfo("Europe/Paris")      
-        date_du_jour = datetime.now(fuseau_horaire).date()
-        six_jours_avant = date_du_jour - timedelta(days=6)
-
-        with self.SessionLocal() as session:
-            # ->       : extrait une valeur de type JSONB (par clé ou index)
-            # ->>      : extrait une valeur de type text (par clé ou index)
-            # ::[type] : notation de cast postgresql (ici en timestamptz)
-            timestamps = [
-                text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'dateCreation')::timestamptz"),
-                text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'dateDepot')::timestamptz"),
-                text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'datePublication')::timestamptz"),
-                text("(payload -> 'cycleDeVie' -> 'chrono' ->> 'datePublicationWeb')::timestamptz")
-            ]
-
-            conditions = []
-
-            for timestamp in timestamps:
-               conditions.append(
-                    cast(timestamp, DATE).between(six_jours_avant, date_du_jour)
-                )
-            
-            query = (
-                select(Document.payload)
-                    # coalesce : retourne la première condition non nulle, car une des date peut être absente
-                    # *        : décompile la liste en arguments positionnels, ex (condition1, condition2, condition3,...)
-                    .where(func.coalesce(*conditions))
-                    .order_by(text("payload ->> 'uid'"))
-            )
-
-            documents_dict = session.execute(query).scalars().all()
-
-        return documents_dict
     
 
-    def recuperer_documents_semaine_courante_v2(self) -> list[DocumentV2]:
+    def recuperer_documents_semaine_courante(self) -> list[DocumentModel]:
         """Retourne les documents récents accompagnés de leurs auteurs et mandats."""
         fuseau_horaire = ZoneInfo("Europe/Paris")
         date_du_jour = datetime.now(fuseau_horaire).date()
@@ -64,22 +26,22 @@ class RechercherDocuments(_BaseConnexionBdd):
 
         with self.SessionLocal() as session:
             conditions = [
-                func.date(DocumentV2.date_creation).between(six_jours_avant, date_du_jour),
-                func.date(DocumentV2.date_depot).between(six_jours_avant, date_du_jour),
-                func.date(DocumentV2.date_publication).between(six_jours_avant, date_du_jour),
-                func.date(DocumentV2.date_publication_web).between(six_jours_avant, date_du_jour),
+                func.date(DocumentModel.date_creation).between(six_jours_avant, date_du_jour),
+                func.date(DocumentModel.date_depot).between(six_jours_avant, date_du_jour),
+                func.date(DocumentModel.date_publication).between(six_jours_avant, date_du_jour),
+                func.date(DocumentModel.date_publication_web).between(six_jours_avant, date_du_jour),
             ]
 
             query = (
-                select(DocumentV2)
+                select(DocumentModel)
                 .options(
-                    selectinload(DocumentV2.auteurs)
-                    .joinedload(DocumentActeur.acteur)
-                    .selectinload(ActeurV2.mandats)
-                    .joinedload(Mandat.organe)
+                    selectinload(DocumentModel.auteurs)
+                    .joinedload(DocumentActeurModel.acteur)
+                    .selectinload(ActeurModel.mandats)
+                    .joinedload(MandatModel.organe)
                 )
                 .where(or_(*conditions))
-                .order_by(DocumentV2.uid)
+                .order_by(DocumentModel.uid)
             )
 
             documents = session.execute(query).scalars().unique().all()

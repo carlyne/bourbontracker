@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query, status
 from src.api.routes.acteurReponse import ActeurReponse
 from src.metier.acteur.acteur import Acteur
 from src.metier.acteur.enregistrerActeurs import mettre_a_jour_acteurs
-from src.metier.acteur.recupererActeur import recuperer_acteur, recuperer_acteur_v2
+from src.metier.acteur.recupererActeur import recuperer_acteur, recuperer_acteur
 
 router = APIRouter(prefix="/v1/acteurs", tags=["acteurs"])
 
@@ -21,7 +21,7 @@ def retourne_acteur(
         description="Numéro de legislature (ex: '17').",
     ),
 ) -> ActeurReponse:
-    acteur: Acteur = recuperer_acteur_v2(uid, legislature=legislature)
+    acteur: Acteur = recuperer_acteur(uid, legislature=legislature)
     return ActeurReponse.model_validate(
         acteur.model_dump(mode="python", by_alias=True)
     )

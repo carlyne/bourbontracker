@@ -1,8 +1,8 @@
-from typing import Dict, Iterable, List, Sequence, Set, Optional
+from typing import Dict, Iterable, List, Set, Optional
 
 from src.metier.acteur.recupererActeur import recuperer_acteur
 from src.metier.applicationExceptions import DocumentIntrouvableException
-from src.metier.acteur.recupererActeur import _convertir_acteur_v2_en_modele_metier
+from src.metier.acteur.recupererActeur import _convertir_acteur_en_modele_metier
 from src.metier.document.document import (
     Acteur as DocumentActeur,
     Auteur,
@@ -20,46 +20,30 @@ from src.metier.document.document import (
     SousType,
     Titres,
     Type_,
-    parse_document_depuis_payload,
 )
 from src.infra.document.rechercherDocuments import RechercherDocuments
 from src.infra.models import (
-    ActeurV2 as ActeurV2Model,
-    DocumentActeur as DocumentActeurModel,
-    DocumentV2 as DocumentV2Model,
-    OrganeV2 as OrganeV2Model,
+    ActeurModel,
+    DocumentActeurModel,
+    DocumentModel,
+    OrganeModel,
 )
 
 def recuperer_documents_semaine_courante() -> list[Document]:
-    documents = _recuperer_documents_semaine_courante()
-    acteurs = _charger_acteurs(_collecter_acteurs_uids(documents))
-    return _enrichir_documents(documents, acteurs)
-
-def recuperer_documents_semaine_courante_v2() -> list[Document]:
-    documents_v2 = _recuperer_documents_v2_semaine_courante()
+    documents_models = _recuperer_documents_semaine_courante()
 
     documents = [
         document
-        for document in (_convertir_document_v2_en_modele_metier(document_v2) for document_v2 in documents_v2)
+        for document in (_convertir_document_en_modele_metier(document_model) for document_model in documents_models)
         if document and document.auteurs and document.auteurs.auteur
     ]
 
     if not documents:
         raise DocumentIntrouvableException("Aucun document trouvé")
 
-    return documents
+    return documents 
 
-def _recuperer_documents_semaine_courante() -> Sequence[dict]:
-    rechercher_documents = RechercherDocuments()
-    payloads = rechercher_documents.recuperer_documents_semaine_courante()
-
-    if not payloads:
-        raise DocumentIntrouvableException("Aucun document trouvé")
-    
-    return [parse_document_depuis_payload(payload) for payload in payloads]  
-
-
-def _recuperer_documents_v2_semaine_courante() -> list[DocumentV2Model]:
+def _recuperer_documents_semaine_courante() -> list[DocumentModel]:
     rechercher_documents = RechercherDocuments()
     documents = rechercher_documents.recuperer_documents_semaine_courante()
 
@@ -68,7 +52,7 @@ def _recuperer_documents_v2_semaine_courante() -> list[DocumentV2Model]:
 
     return documents  
 
-def _convertir_document_v2_en_modele_metier(document: DocumentV2Model) -> Optional[Document]:
+def _convertir_document_en_modele_metier(document: DocumentModel) -> Optional[Document]:
     cycle_de_vie = _construire_cycle_de_vie(document)
     titres = _construire_titres(document)
     notice = _construire_notice(document)
@@ -92,7 +76,7 @@ def _convertir_document_v2_en_modele_metier(document: DocumentV2Model) -> Option
         organesReferents=OrganesReferents(organeRef=organes_referents) if organes_referents else None,
     )
 
-def _construire_cycle_de_vie(document: DocumentV2Model) -> Optional[CycleDeVie]:
+def _construire_cycle_de_vie(document: DocumentModel) -> Optional[CycleDeVie]:
     if not any(
         (
             document.date_creation,
@@ -113,7 +97,7 @@ def _construire_cycle_de_vie(document: DocumentV2Model) -> Optional[CycleDeVie]:
     return CycleDeVie(chrono=chrono)
 
 
-def _construire_titres(document: DocumentV2Model) -> Optional[Titres]:
+def _construire_titres(document: DocumentModel) -> Optional[Titres]:
     if not any((document.titre_principal, document.titre_principal_court)):
         return None
     return Titres(
@@ -122,7 +106,7 @@ def _construire_titres(document: DocumentV2Model) -> Optional[Titres]:
     )
 
 
-def _construire_notice(document: DocumentV2Model) -> Optional[Notice]:
+def _construire_notice(document: DocumentModel) -> Optional[Notice]:
     if not any((document.notice_num_notice, document.notice_formule, document.notice_adoption_conforme)):
         return None
     return Notice(
@@ -131,7 +115,7 @@ def _construire_notice(document: DocumentV2Model) -> Optional[Notice]:
         adoptionConforme=document.notice_adoption_conforme,
     )
 
-def _construire_classification(document: DocumentV2Model) -> Optional[Classification]:
+def _construire_classification(document: DocumentModel) -> Optional[Classification]:
     famille = _construire_famille(document)
     type_ = _construire_type(document)
     sous_type = _construire_sous_type(document)
@@ -147,7 +131,7 @@ def _construire_classification(document: DocumentV2Model) -> Optional[Classifica
     )
 
 
-def _construire_famille(document: DocumentV2Model) -> Optional[Famille]:
+def _construire_famille(document: DocumentModel) -> Optional[Famille]:
     depot = Depot(
         code=document.classification_famille_depot_code,
         libelle=document.classification_famille_depot_libelle,
@@ -176,7 +160,7 @@ def _construire_famille(document: DocumentV2Model) -> Optional[Famille]:
     return Famille(depot=depot, classe=classe, espece=espece)
 
 
-def _construire_type(document: DocumentV2Model) -> Optional[Type_]:
+def _construire_type(document: DocumentModel) -> Optional[Type_]:
     if not any((document.classification_type_code, document.classification_type_libelle)):
         return None
     return Type_(
@@ -185,7 +169,7 @@ def _construire_type(document: DocumentV2Model) -> Optional[Type_]:
     )
 
 
-def _construire_sous_type(document: DocumentV2Model) -> Optional[SousType]:
+def _construire_sous_type(document: DocumentModel) -> Optional[SousType]:
     if not any(
         (
             document.classification_sous_type_code,
@@ -201,7 +185,7 @@ def _construire_sous_type(document: DocumentV2Model) -> Optional[SousType]:
     )
 
 
-def _construire_auteurs(document: DocumentV2Model) -> List[Auteur]:
+def _construire_auteurs(document: DocumentModel) -> List[Auteur]:
     auteurs: List[Auteur] = []
 
     for auteur in document.auteurs:
@@ -227,16 +211,16 @@ def _convertir_auteur(auteur: DocumentActeurModel) -> Optional[Auteur]:
     return Auteur(acteur=acteur)
 
 
-def _convertir_acteur(acteur: Optional[ActeurV2Model]):
+def _convertir_acteur(acteur: Optional[ActeurModel]):
     if acteur is None:
         return None
 
     organes = _collecter_organes_associes(acteur)
-    return _convertir_acteur_v2_en_modele_metier(acteur, organes)
+    return _convertir_acteur_en_modele_metier(acteur, organes)
 
 
-def _collecter_organes_associes(acteur: ActeurV2Model) -> List[OrganeV2Model]:
-    organes_uniques: dict[str, OrganeV2Model] = {}
+def _collecter_organes_associes(acteur: ActeurModel) -> List[OrganeModel]:
+    organes_uniques: dict[str, OrganeModel] = {}
 
     for mandat in acteur.mandats:
         if mandat.organe is not None and mandat.organe.uid:
@@ -245,7 +229,7 @@ def _collecter_organes_associes(acteur: ActeurV2Model) -> List[OrganeV2Model]:
     return list(organes_uniques.values())
 
 
-def _construire_organes_referents(document: DocumentV2Model) -> List[str]:
+def _construire_organes_referents(document: DocumentModel) -> List[str]:
     return [ref for ref in document.organes_referents if ref]
 
 def _collecter_acteurs_uids(documents: Iterable[Document]) -> Set[str]:

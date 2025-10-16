@@ -6,9 +6,9 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy import func
 from typing import Iterable
 
-from src.infra.models import Organe, OrganeV2
+from src.infra.models import OrganeModel
 from src.infra._baseStockage import _BaseStockage
-from src.metier.organe.organe import Organe as OrganeMetier, parser_organe_depuis_payload
+from src.metier.organe.organe import Organe, parser_organe_depuis_payload
 
 logger = logging.getLogger(__name__)
 
@@ -23,21 +23,9 @@ class MettreAJourStockOrganes(_BaseStockage):
             )
         )
 
-        self._mettre_a_jour_stock_v2()
-
-    def _mettre_a_jour_stock(self) -> int:
-        self._mettre_a_jour()
-        with self.SessionLocal() as session:
-            try:
-                total_organes = self._enregistrer_depuis_dossier(session, Organe, batch_size=1000)
-                session.commit()
-            except Exception:
-                session.rollback()
-                logger.exception("Rollback de la transaction en raison d'une erreur lors de la mise à jour des organes")
-                raise
-        return total_organes
+        self._mettre_a_jour_stock()
     
-    def _mettre_a_jour_stock_v2(self) -> int:
+    def _mettre_a_jour_stock(self) -> int:
         self._mettre_a_jour()
         with self.SessionLocal() as session:
             try:
@@ -84,7 +72,7 @@ class MettreAJourStockOrganes(_BaseStockage):
 
         return compteur_total
 
-    def _convertir_organe_en_ligne(self, organe: OrganeMetier) -> dict[str, object]:
+    def _convertir_organe_en_ligne(self, organe: Organe) -> dict[str, object]:
         vi_mode = organe.viMoDe
         return {
             "uid": organe.uid,
@@ -106,14 +94,14 @@ class MettreAJourStockOrganes(_BaseStockage):
         if not lignes:
             return
 
-        query = pg_insert(OrganeV2).values(lignes)
+        query = pg_insert(OrganeModel).values(lignes)
         colonnes = {clé for clé in lignes[0] if clé != "uid"}
         set_clause = {colonne: query.excluded[colonne] for colonne in colonnes}
         set_clause["updated_at"] = func.now()
 
         session.execute(
             query.on_conflict_do_update(
-                index_elements=[OrganeV2.uid],
+                index_elements=[OrganeModel.uid],
                 set_=set_clause,
             )
         )

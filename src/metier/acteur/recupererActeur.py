@@ -8,7 +8,7 @@ from src.infra.acteur.rechercherActeur import RechercherActeur
 from src.metier.applicationExceptions import ActeurIntrouvableException
 from src.metier.acteur.acteur import (
     Acteur,
-    Collaborateur as CollaborateurModele,
+    Collaborateur,
     Collaborateurs,
     Election,
     EtatCivil,
@@ -22,69 +22,31 @@ from src.metier.acteur.acteur import (
     Organes,
     Profession,
     SocProcINSEE,
-    Suppleant as SuppleantModele,
+    Suppleant,
     Suppleants,
     Uid,
-    parser_acteur_depuis_payload,
 )
 from src.infra.models import (
-    ActeurV2 as ActeurV2Model,
-    Mandat as MandatModel,
-    OrganeV2 as OrganeV2Model,
+    ActeurModel,
+    MandatModel,
+    OrganeModel,
 )
 
 logger = logging.getLogger(__name__)
-
-def recuperer_acteur(
-        uid: str | None = None,
-        legislature: Optional[str] = None
-) -> Acteur:
-    rechercher_acteur = RechercherActeur()
-
-    acteur_payload, organes_payload = rechercher_acteur.recuperer_acteur_par_uid(uid)
-
-    if not acteur_payload:
-        raise ActeurIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
-
-    try:
-        acteur: Acteur = parser_acteur_depuis_payload(acteur_payload)
-        mandats = _extraire_mandats_type_groupe_politique(acteur)
-
-        if not mandats:
-            logger.warning("Acteur %s non représenté par un groupe politique", uid)
-            raise ActeurIntrouvableException(
-                f"l'Acteur avec uid='{uid}' n'est pas dans un groupe politique"
-            )
-
-        mandats = _filtrer_mandats_par_legislature(mandats, legislature)
-
-        if not organes_payload:
-            logger.warning("Aucun organe associé à l'acteur %s", uid)
-            return _mettre_a_jour_mandats(acteur, mandats)
-
-        mandats_enrichis = _enrichir_mandats_avec_détail_des_organes(mandats, organes_payload)
-
-        return _mettre_a_jour_mandats(acteur, mandats_enrichis)
-
-    except ValidationError as e:
-        logger.error("Erreur de validation pour le fichier Acteur avec uid=%s : %s", uid, e)
-        raise ActeurIntrouvableException(
-            f"Acteur invalide dans le fichier: {uid}.json"
-        ) from e
     
-def recuperer_acteur_v2(
+def recuperer_acteur(
         uid: str | None = None,
         legislature: Optional[str] = None,
 ) -> Acteur:
     rechercher_acteur = RechercherActeur()
 
-    acteur_v2, organes_v2 = rechercher_acteur.recuperer_acteur_par_uid_v2(uid)
+    acteur_modele, organes_modele = rechercher_acteur.recuperer_acteur_par_uid(uid)
 
-    if acteur_v2 is None:
+    if acteur_modele is None:
         raise ActeurIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
 
     try:
-        acteur: Acteur = _convertir_acteur_v2_en_modele_metier(acteur_v2, organes_v2)
+        acteur: Acteur = _convertir_acteur_en_modele_metier(acteur_modele, organes_modele)
         mandats = _extraire_mandats_type_groupe_politique(acteur)
 
         if not mandats:
@@ -103,9 +65,9 @@ def recuperer_acteur_v2(
             f"Acteur invalide dans le fichier: {uid}.json"
         ) from e
 
-def _convertir_acteur_v2_en_modele_metier(
-        acteur: ActeurV2Model,
-        organes: List[OrganeV2Model],
+def _convertir_acteur_en_modele_metier(
+        acteur: ActeurModel,
+        organes: List[OrganeModel],
 ) -> Acteur:
     organes_par_uid = {organe.uid: organe for organe in organes if organe.uid}
 
@@ -113,7 +75,7 @@ def _convertir_acteur_v2_en_modele_metier(
     profession = _construire_profession(acteur)
 
     mandats = [
-        _convertir_mandat_v2_en_modele_metier(mandat, organes_par_uid)
+        _convertir_mandat_en_modele_metier(mandat, organes_par_uid)
         for mandat in acteur.mandats
     ]
 
@@ -126,7 +88,7 @@ def _convertir_acteur_v2_en_modele_metier(
     )
 
 
-def _construire_etat_civil(acteur: ActeurV2Model) -> Optional[EtatCivil]:
+def _construire_etat_civil(acteur: ActeurModel) -> Optional[EtatCivil]:
     ident = Ident(civ=acteur.civilite, prenom=acteur.prenom, nom=acteur.nom)
     if not any((ident.civ, ident.prenom, ident.nom)):
         ident = None
@@ -151,7 +113,7 @@ def _construire_etat_civil(acteur: ActeurV2Model) -> Optional[EtatCivil]:
     return EtatCivil(ident=ident, infoNaissance=info_naissance)
 
 
-def _construire_profession(acteur: ActeurV2Model) -> Optional[Profession]:
+def _construire_profession(acteur: ActeurModel) -> Optional[Profession]:
     soc_proc = SocProcINSEE(
         catSocPro=acteur.categorie_socio_professionnelle,
         famSocPro=acteur.famille_socio_professionnelle,
@@ -165,9 +127,9 @@ def _construire_profession(acteur: ActeurV2Model) -> Optional[Profession]:
     return Profession(libelleCourant=acteur.profession_libelle, socProcINSEE=soc_proc)
 
 
-def _convertir_mandat_v2_en_modele_metier(
+def _convertir_mandat_en_modele_metier(
         mandat: MandatModel,
-        organes_par_uid: Dict[str, OrganeV2Model],
+        organes_par_uid: Dict[str, OrganeModel],
 ) -> Mandat:
     infos_qualite = None
     if any((mandat.infos_qualite_code, mandat.infos_qualite_libelle, mandat.infos_qualite_libelle_sexe)):
@@ -218,7 +180,7 @@ def _convertir_mandat_v2_en_modele_metier(
         )
 
     collaborateurs = [
-        CollaborateurModele(
+        Collaborateur(
             qualite=collaborateur.qualite,
             prenom=collaborateur.prenom,
             nom=collaborateur.nom,
@@ -234,7 +196,7 @@ def _convertir_mandat_v2_en_modele_metier(
     )
 
     suppleants = [
-        SuppleantModele(
+        Suppleant(
             dateDebut=suppleant.date_debut,
             dateFin=suppleant.date_fin,
             suppleantRef=suppleant.suppleant_uid,
@@ -245,9 +207,9 @@ def _convertir_mandat_v2_en_modele_metier(
 
     organe_detail = None
     if mandat.organe_uid:
-        organe_v2 = organes_par_uid.get(mandat.organe_uid)
-        if organe_v2 is not None:
-            organe_detail = Organe.model_validate(organe_v2)
+        organe = organes_par_uid.get(mandat.organe_uid)
+        if organe is not None:
+            organe_detail = Organe.model_validate(organe)
 
     organes = None
     if mandat.organe_uid or organe_detail is not None:
