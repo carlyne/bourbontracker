@@ -1,11 +1,12 @@
 from collections.abc import Sequence
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse, RedirectResponse
 
+from src.api.routes import routesActeur
+from src.api.routes import routesOrgane
 from src.api.gestionnaireExceptions import GestionnaireException
-from src.api.routes import routesActeurs, routesDocuments, routesOrganes
+from src.api.routes import routesDocument
 from src.settings import settings
 
 _gestionnaire_exceptions = GestionnaireException()
@@ -28,9 +29,9 @@ def _configurer_cors(
     )
 
 def _enregistrer_routers(app: FastAPI) -> None:
-    app.include_router(routesActeurs.router)
-    app.include_router(routesDocuments.router)
-    app.include_router(routesOrganes.router)
+    app.include_router(routesActeur.router)
+    app.include_router(routesDocument.router)
+    app.include_router(routesOrgane.router)
 
 def _définir_redirection_défaut_vers_la_documentation(app) :
     """
@@ -47,7 +48,7 @@ def créer_instance_application() -> FastAPI:
     _configurer_cors(app, settings.effective_cors_allowed_origins)
     _enregistrer_routers(app)
     _définir_redirection_défaut_vers_la_documentation(app)
-    _gestionnaire_exceptions.configurer_réponses_par_types_d_exceptions(app)
+    _gestionnaire_exceptions.configurer_réponses_en_cas_d_exceptions(app)
 
     return app
 

@@ -1,4 +1,4 @@
 from src.infra.document.mettreAJourStockDocuments import MettreAJourStockDocuments
 
-def mettre_a_jour_documents():  
+def créer_ou_rafraichir_données_documents():  
         MettreAJourStockDocuments()      

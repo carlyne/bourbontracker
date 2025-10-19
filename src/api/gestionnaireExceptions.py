@@ -49,7 +49,7 @@ class GestionnaireException:
             return self._formater_réponse(str(exception), code_réponse)
         return constuire_réponse
 
-    def configurer_réponses_par_types_d_exceptions(self, app: FastAPI) -> None:
+    def configurer_réponses_en_cas_d_exceptions(self, app: FastAPI) -> None:
         """
         Enregistre les handlers d’exception dans l’application pour que l'api renvoie la réponse souhaitée
         en cas d’exception interceptée.

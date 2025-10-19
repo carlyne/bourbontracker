@@ -4,7 +4,7 @@ from typing_extensions import Annotated
 from typing import List, Optional
 from pydantic import AwareDatetime, BaseModel, BeforeValidator, ConfigDict
 
-from src.api.routes.acteurReponse import ActeurReponse
+from src.api.schemas.acteurReponse import ActeurReponse
 
 def _to_list(valeur):
     if valeur is None:
