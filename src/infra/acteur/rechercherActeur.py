@@ -10,11 +10,11 @@ from src.infra.models import ActeurModel, ActeurModel, MandatModel, OrganeModel,
 
 logger = logging.getLogger(__name__)
 
-class RechercherActeur(BaseConnexionBdd):
+class RechercherActeurEnBase(BaseConnexionBdd):
     def __init__(self):
         super().__init__()
         
-    def recuperer_acteur_par_uid(self, uid: str) -> tuple[ActeurModel | None, list[OrganeModel]]:
+    def recherche_par_uid(self, uid: str) -> tuple[ActeurModel | None, list[OrganeModel]]:
         """Récupère un acteur V2 avec ses mandats, collaborateurs, suppléants et organes associés."""
 
         with self.ouvrir_session() as session:

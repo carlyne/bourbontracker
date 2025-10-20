@@ -1,11 +1,10 @@
 import logging
 
-from pydantic import ValidationError
 from typing import Dict, List, Optional
 
 from src.metier.organe.organe import Organe, parser_organe_depuis_payload
-from src.infra.acteur.rechercherActeur import RechercherActeur
-from src.metier.metierExceptions import DonnéeIntrouvableException
+from src.infra.acteur.rechercherActeur import RechercherActeurEnBase
+from src.metier.metierExceptions import DonnéeIntrouvableException, RecupererDonnéeException
 from src.metier.acteur.acteur import (
     Acteur,
     Collaborateur,
@@ -32,40 +31,57 @@ from src.infra.models import (
     OrganeModel,
 )
 
+TYPE_GROUPE_POLITIQUE: str = "GP"
+
 logger = logging.getLogger(__name__)
-    
-def recuperer_acteur(
-        uid: str | None = None,
-        legislature: Optional[str] = None,
+
+
+def _filtrer_mandats_sur_groupe_politique(acteur: Acteur) -> List[Mandat]:
+    return [mandat for mandat in acteur.mandats.mandat if mandat.typeOrgane == TYPE_GROUPE_POLITIQUE]
+
+def _filtrer_mandats_par_legislature(
+    mandats: List[Mandat],
+    legislature: Optional[str]
+) -> List[Mandat]:
+    if legislature is None:
+        return mandats
+    return [mandat for mandat in mandats if mandat.legislature == legislature]
+
+def _éditer_avec_mandats_filtrés(
+    acteur: Acteur,
+    mandats: List[Mandat]
 ) -> Acteur:
-    rechercher_acteur = RechercherActeur()
+    return acteur.model_copy(update={"mandats": Mandats(mandat=mandats)})
 
-    acteur_modele, organes_modele = rechercher_acteur.recuperer_acteur_par_uid(uid)
+def recuperer_acteur(
+    uid: str,
+    legislature: Optional[str] = None
+) -> Acteur:
+    rechercher_acteur_en_base = RechercherActeurEnBase()
+    acteur_model, organes_model = rechercher_acteur_en_base.recherche_par_uid(uid)
 
-    if acteur_modele is None:
-        raise DonnéeIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
+    if acteur_model is None:
+        raise DonnéeIntrouvableException(f"Acteur introuvable pour uid '{uid}'")
 
     try:
-        acteur: Acteur = _convertir_acteur_en_modele_metier(acteur_modele, organes_modele)
-        mandats = _extraire_mandats_type_groupe_politique(acteur)
+        acteur: Acteur = _parser_en_objet_metier(acteur_model, organes_model)
+        mandats_filtrés_par_type: List[Mandat] = _filtrer_mandats_sur_groupe_politique(acteur)
+        
+        if not mandats_filtrés_par_type:
+            logger.warning("Acteur %s sans mandat de type 'groupe politique'", uid)
+            mandats_filtrés_par_type = acteur.mandats
+        
+        mandats_filtrés_par_legislature: List[Mandat] = _filtrer_mandats_par_legislature(mandats_filtrés_par_type, legislature)
+        mandats_enrichis = _enrichir_mandats_avec_détail_des_organes(mandats_filtrés_par_legislature)
+        acteur = _éditer_avec_mandats_filtrés(acteur, mandats_enrichis)
 
-        if not mandats:
-            logger.warning("Acteur %s non représenté par un groupe politique", uid)
-            raise DonnéeIntrouvableException(
-                f"l'Acteur avec uid='{uid}' n'est pas dans un groupe politique"
-            )
+        return acteur
 
-        mandats = _filtrer_mandats_par_legislature(mandats, legislature)
+    except Exception as e:
+        logger.error("Erreur validation acteur uid=%s : %s", uid, e)
+        raise RecupererDonnéeException(f"Acteur invalide pour uid='{uid}'") from e
 
-        return _mettre_a_jour_mandats(acteur, mandats)
-
-    except ValidationError as e:
-        logger.error("Erreur de validation pour le fichier Acteur avec uid=%s : %s", uid, e)
-        raise DonnéeIntrouvableException(
-            f"Acteur invalide dans le fichier: {uid}.json"
-        ) from e
-
-def _convertir_acteur_en_modele_metier(
+def _parser_en_objet_metier(
         acteur: ActeurModel,
         organes: List[OrganeModel],
 ) -> Acteur:
@@ -234,11 +250,6 @@ def _convertir_mandat_en_modele_metier(
         collaborateurs=collaborateurs_modele,
     )
 
-
-def _extraire_mandats_type_groupe_politique(acteur: Acteur) -> List[Mandat]:
-    mandats = acteur.mandats.mandat if (acteur.mandats and acteur.mandats.mandat) else []
-    return [mandat for mandat in mandats if mandat.typeOrgane == "GP"]
-
 def _filtrer_mandats_par_legislature(
         mandats: List[Mandat], 
         legislature: Optional[str]
@@ -266,6 +277,3 @@ def _enrichir_mandats_avec_détail_des_organes(
         mandats_enrichis.append(mandat)
     
     return mandats_enrichis
-
-def _mettre_a_jour_mandats(acteur: Acteur, mandats: List[Mandat]) -> Acteur:
-    return acteur.model_copy(update={"mandats": Mandats(mandat=mandats)})

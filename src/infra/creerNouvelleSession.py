@@ -20,7 +20,4 @@ SessionLocal = sessionmaker(
 )
 
 def creer_nouvelle_session() -> SessionType:
-    """
-    Fournit une nouvelle session liée à l’engine configuré.
-    """
     return SessionLocal()
