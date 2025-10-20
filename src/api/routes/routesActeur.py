@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query, status
 from src.api.schemas.acteurReponse import ActeurReponse
 from src.metier.acteur.acteur import Acteur
 from src.metier.acteur.enregistrerActeurs import créer_ou_raffraichir_données_acteurs
-from src.metier.acteur.recupererActeur import recuperer_acteur, recuperer_acteur
+from src.metier.acteur.recupererActeur import recuperer_acteur
 
 router = APIRouter(prefix="/v1/acteurs", tags=["acteurs"])
 
@@ -16,7 +16,8 @@ router = APIRouter(prefix="/v1/acteurs", tags=["acteurs"])
     summary="Récupère un acteur par son identifiant",
     description=(
         "Récupère une entité « Acteur » identifiée par `uid`. "
-        "Optionnellement, le paramètre `legislature` permet de filtrer selon une législature donnée."
+        "Optionnellement, les paramètres `legislature` et `groupe_politique_uid` "
+        "permettent de restreindre les mandats retournés."
     ),
     responses={
         200: {"description": "Acteur trouvé"},
@@ -29,10 +30,18 @@ def retourne_acteur(
     uid: str,
     legislature: str | None = Query(
         default=None,
-        description="Numéro de legislature facultatif (ex: '17')."
-    )
+        description="Numéro de legislature facultatif (ex: '17').",
+    ),
+    groupe_politique_uid: str | None = Query(
+        default=None,
+        description="Identifiant d'un groupe politique (ex: 'PO123456').",
+    ),
 ) -> ActeurReponse:
-    acteur: Acteur = recuperer_acteur(uid, legislature=legislature)
+    acteur: Acteur = recuperer_acteur(
+        uid,
+        legislature=legislature,
+        groupe_politique_uid=groupe_politique_uid,
+    )
 
     return ActeurReponse.model_validate(
         acteur.model_dump(mode="python", by_alias=True)
