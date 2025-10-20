@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from datetime import date
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel, 
+    ConfigDict, 
+    Field
+)
 
 class OrganeReponse(BaseModel):
     """
     Documentation officielle des champs : https://www.assemblee-nationale.fr/opendata/Schemas_Entites/AMO/Schemas_Organes.html
     """
-    
+
     model_config = ConfigDict(
         populate_by_name=True,
         # ignore les champs supplémentaires lors des parsing 
