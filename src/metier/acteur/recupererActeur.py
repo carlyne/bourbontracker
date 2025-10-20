@@ -2,7 +2,7 @@ import logging
 
 from typing import Dict, List, Optional
 
-from src.metier.organe.organe import Organe, parser_organe_depuis_payload
+from src.metier.organe.organe import Organe
 from src.infra.acteur.rechercherActeur import RechercherActeurEnBase
 from src.metier.metierExceptions import DonnéeIntrouvableException, RecupererDonnéeException
 from src.metier.acteur.acteur import (
@@ -31,17 +31,21 @@ from src.infra.models import (
     OrganeModel,
 )
 
-TYPE_GROUPE_POLITIQUE: str = "GP"
-
 logger = logging.getLogger(__name__)
 
 
-def _filtrer_mandats_sur_groupe_politique(acteur: Acteur) -> List[Mandat]:
-    return [mandat for mandat in acteur.mandats.mandat if mandat.typeOrgane == TYPE_GROUPE_POLITIQUE]
+def _filtrer_mandats_par_type(
+    mandats: List[Mandat],
+    type_organe: Optional[str],
+) -> List[Mandat]:
+    if type_organe is None:
+        return mandats
+    return [mandat for mandat in mandats if mandat.typeOrgane == type_organe]
+
 
 def _filtrer_mandats_par_legislature(
     mandats: List[Mandat],
-    legislature: Optional[str]
+    legislature: Optional[str],
 ) -> List[Mandat]:
     if legislature is None:
         return mandats
@@ -55,7 +59,8 @@ def _éditer_avec_mandats_filtrés(
 
 def recuperer_acteur(
     uid: str,
-    legislature: Optional[str] = None
+    type_organe: Optional[str] = None,
+    legislature: Optional[str] = None,
 ) -> Acteur:
     rechercher_acteur_en_base = RechercherActeurEnBase()
     acteur_model, organes_model = rechercher_acteur_en_base.recherche_par_uid(uid)
@@ -65,14 +70,20 @@ def recuperer_acteur(
 
     try:
         acteur: Acteur = _parser_en_objet_metier(acteur_model, organes_model)
-        mandats_filtrés_par_type: List[Mandat] = _filtrer_mandats_sur_groupe_politique(acteur)
-        
-        if not mandats_filtrés_par_type:
-            logger.warning("Acteur %s sans mandat de type 'groupe politique'", uid)
-            mandats_filtrés_par_type = acteur.mandats
-        
-        mandats_filtrés_par_legislature: List[Mandat] = _filtrer_mandats_par_legislature(mandats_filtrés_par_type, legislature)
-        mandats_enrichis = _enrichir_mandats_avec_détail_des_organes(mandats_filtrés_par_legislature)
+        mandats_source: List[Mandat] = acteur.mandats.mandat if acteur.mandats else []
+
+        mandats_filtrés_par_type: List[Mandat] = _filtrer_mandats_par_type(
+            mandats_source,
+            type_organe,
+        )
+        mandats_filtrés_par_legislature: List[Mandat] = _filtrer_mandats_par_legislature(
+            mandats_filtrés_par_type,
+            legislature,
+        )
+        mandats_enrichis = _enrichir_mandats_avec_détail_des_organes(
+            mandats_filtrés_par_legislature,
+            organes_model,
+        )
         acteur = _éditer_avec_mandats_filtrés(acteur, mandats_enrichis)
 
         return acteur
@@ -250,30 +261,33 @@ def _convertir_mandat_en_modele_metier(
         collaborateurs=collaborateurs_modele,
     )
 
-def _filtrer_mandats_par_legislature(
-        mandats: List[Mandat], 
-        legislature: Optional[str]
-) -> List[Mandat]:
-    if not legislature:
-        return mandats
-    return [mandat for mandat in mandats if mandat.legislature == legislature]
-
 def _enrichir_mandats_avec_détail_des_organes(
-        mandats: List[Mandat], 
-        organes_payload
+        mandats: List[Mandat],
+        organes_models: List[OrganeModel],
 ) -> List[Mandat]:
-    organes: List[Organe] = [parser_organe_depuis_payload(organe_payload) for organe_payload in organes_payload]
-    organes_uids: Dict[str, Organe] = {organe.uid: organe for organe in organes if organe and organe.uid}
-    mandats_enrichis: List[Mandat] = []
-    
-    for mandat in mandats:
-        organe_ref = mandat.organes.organeRef if mandat.organes else None
-        
-        if organe_ref:
-            detail = organes_uids.get(organe_ref)
-            organes_avec_detail = mandat.organes.model_copy(update={"detail": detail})
-            mandat = mandat.model_copy(update={"organes": organes_avec_detail})
+    if not mandats:
+        return []
 
-        mandats_enrichis.append(mandat)
-    
+    organes_uids: Dict[str, Organe] = {
+        organe.uid: Organe.model_validate(organe)
+        for organe in organes_models
+        if organe.uid
+    }
+
+    mandats_enrichis: List[Mandat] = []
+
+    for mandat in mandats:
+        organes_actuels = mandat.organes
+        if organes_actuels is None or organes_actuels.organeRef is None:
+            mandats_enrichis.append(mandat)
+            continue
+
+        detail = organes_uids.get(organes_actuels.organeRef)
+        if detail is None:
+            mandats_enrichis.append(mandat)
+            continue
+
+        organes_enrichis = organes_actuels.model_copy(update={"detail": detail})
+        mandats_enrichis.append(mandat.model_copy(update={"organes": organes_enrichis}))
+
     return mandats_enrichis
