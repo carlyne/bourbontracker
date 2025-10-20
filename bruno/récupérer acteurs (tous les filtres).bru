@@ -1,0 +1,16 @@
+meta {
+  name: récupérer acteurs (tous les filtres)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{url}}/v1/acteurs/PA720552?type_organe=UNO&legislature=17
+  body: none
+  auth: none
+}
+
+query {
+  type_organe: UNO
+  legislature: 17
+}
