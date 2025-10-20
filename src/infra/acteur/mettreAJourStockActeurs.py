@@ -45,7 +45,7 @@ class MettreAJourStockActeurs(_BaseStockage):
 
     def _mettre_a_jour_stock(self) -> int:
         self._mettre_a_jour()
-        with self.SessionLocal() as session:
+        with self.ouvrir_session() as session:
             try:
                 total_acteurs = self._enregistrer_acteurs_depuis_dossier(session, batch_size=50)
                 session.commit()

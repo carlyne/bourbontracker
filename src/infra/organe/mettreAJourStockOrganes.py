@@ -27,7 +27,7 @@ class MettreAJourStockOrganes(_BaseStockage):
     
     def _mettre_a_jour_stock(self) -> int:
         self._mettre_a_jour()
-        with self.SessionLocal() as session:
+        with self.ouvrir_session() as session:
             try:
                 total_organes = self._enregistrer_organes_depuis_dossier(session, batch_size=1000)
                 session.commit()

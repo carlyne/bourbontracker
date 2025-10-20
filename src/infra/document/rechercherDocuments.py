@@ -7,12 +7,12 @@ from sqlalchemy.orm import selectinload, joinedload
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from src.infra._baseConnexionBdd import _BaseConnexionBdd
+from src.infra.baseConnexionBdd import BaseConnexionBdd
 from src.infra.models import DocumentModel, ActeurModel, DocumentActeurModel, MandatModel
 
 logger = logging.getLogger(__name__)
 
-class RechercherDocuments(_BaseConnexionBdd):
+class RechercherDocuments(BaseConnexionBdd):
     
     def __init__(self):
         super().__init__()
@@ -24,7 +24,7 @@ class RechercherDocuments(_BaseConnexionBdd):
         date_du_jour = datetime.now(fuseau_horaire).date()
         six_jours_avant = date_du_jour - timedelta(days=6)
 
-        with self.SessionLocal() as session:
+        with self.ouvrir_session() as session:
             conditions = [
                 func.date(DocumentModel.date_creation).between(six_jours_avant, date_du_jour),
                 func.date(DocumentModel.date_depot).between(six_jours_avant, date_du_jour),

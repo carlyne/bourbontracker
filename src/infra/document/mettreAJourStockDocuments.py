@@ -52,7 +52,7 @@ class MettreAJourStockDocuments(_BaseStockage):
 
     def _mettre_a_jour_stock(self) -> int:
         self._mettre_a_jour()
-        with self.SessionLocal() as session:
+        with self.ouvrir_session() as session:
             try:
                 total_documents = self._enregistrer_documents_depuis_dossier(session, batch_size=50)
                 session.commit()

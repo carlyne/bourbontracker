@@ -5,19 +5,19 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload, selectinload
 
-from src.infra._baseConnexionBdd import _BaseConnexionBdd
+from src.infra.baseConnexionBdd import BaseConnexionBdd
 from src.infra.models import ActeurModel, ActeurModel, MandatModel, OrganeModel, OrganeModel
 
 logger = logging.getLogger(__name__)
 
-class RechercherActeur(_BaseConnexionBdd):
+class RechercherActeur(BaseConnexionBdd):
     def __init__(self):
         super().__init__()
         
     def recuperer_acteur_par_uid(self, uid: str) -> tuple[ActeurModel | None, list[OrganeModel]]:
         """Récupère un acteur V2 avec ses mandats, collaborateurs, suppléants et organes associés."""
 
-        with self.SessionLocal() as session:
+        with self.ouvrir_session() as session:
             acteur = session.execute(
                 select(ActeurModel)
                 .options(

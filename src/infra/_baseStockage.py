@@ -13,12 +13,12 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.infra._baseConnexionBdd import _BaseConnexionBdd
+from src.infra.baseConnexionBdd import BaseConnexionBdd
 from src.infra.infrastructureException import MiseAJourStockException
 
 logger = logging.getLogger(__name__)
 
-class _BaseStockage(_BaseConnexionBdd):
+class _BaseStockage(BaseConnexionBdd):
     def __init__(
             self, 
             nom_dossier_zip: str, 
