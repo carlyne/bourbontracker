@@ -7,7 +7,6 @@ from src.settings import settings
 
 logger = logging.getLogger(__name__)
 
-
 class _BaseConnexionBdd:
     def __init__(self) -> None:
         self.engine = create_engine(

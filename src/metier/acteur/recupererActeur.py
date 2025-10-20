@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 from src.metier.organe.organe import Organe, parser_organe_depuis_payload
 from src.infra.acteur.rechercherActeur import RechercherActeur
-from src.metier.applicationExceptions import ActeurIntrouvableException
+from src.metier.metierExceptions import DonnéeIntrouvableException
 from src.metier.acteur.acteur import (
     Acteur,
     Collaborateur,
@@ -43,7 +43,7 @@ def recuperer_acteur(
     acteur_modele, organes_modele = rechercher_acteur.recuperer_acteur_par_uid(uid)
 
     if acteur_modele is None:
-        raise ActeurIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
+        raise DonnéeIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
 
     try:
         acteur: Acteur = _convertir_acteur_en_modele_metier(acteur_modele, organes_modele)
@@ -51,7 +51,7 @@ def recuperer_acteur(
 
         if not mandats:
             logger.warning("Acteur %s non représenté par un groupe politique", uid)
-            raise ActeurIntrouvableException(
+            raise DonnéeIntrouvableException(
                 f"l'Acteur avec uid='{uid}' n'est pas dans un groupe politique"
             )
 
@@ -61,7 +61,7 @@ def recuperer_acteur(
 
     except ValidationError as e:
         logger.error("Erreur de validation pour le fichier Acteur avec uid=%s : %s", uid, e)
-        raise ActeurIntrouvableException(
+        raise DonnéeIntrouvableException(
             f"Acteur invalide dans le fichier: {uid}.json"
         ) from e
 

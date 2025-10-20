@@ -1,7 +1,7 @@
 from typing import Dict, Iterable, List, Set, Optional
 
 from src.metier.acteur.recupererActeur import recuperer_acteur
-from src.metier.applicationExceptions import DocumentIntrouvableException
+from src.metier.metierExceptions import DonnéeIntrouvableException
 from src.metier.acteur.recupererActeur import _convertir_acteur_en_modele_metier
 from src.metier.document.document import (
     Acteur as DocumentActeur,
@@ -39,7 +39,7 @@ def recuperer_documents_semaine_courante() -> list[Document]:
     ]
 
     if not documents:
-        raise DocumentIntrouvableException("Aucun document trouvé")
+        raise DonnéeIntrouvableException("Aucun document trouvé")
 
     return documents 
 
@@ -48,7 +48,7 @@ def _recuperer_documents_semaine_courante() -> list[DocumentModel]:
     documents = rechercher_documents.recuperer_documents_semaine_courante()
 
     if not documents:
-        raise DocumentIntrouvableException("Aucun document trouvé")
+        raise DonnéeIntrouvableException("Aucun document trouvé")
 
     return documents  
 

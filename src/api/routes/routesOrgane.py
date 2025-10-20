@@ -1,5 +1,6 @@
 from fastapi import APIRouter, status
 
+from src.api.apiExceptions import UidInvalideException
 from src.metier.organe.organe import Organe
 from src.metier.organe.enregistrerOrgane import créer_ou_raffraichir_données_organes
 from src.metier.organe.recupererOrgane import recuperer_organe
@@ -23,6 +24,9 @@ router = APIRouter(
     }
 )
 def retourne_organe(uid: str) -> OrganeReponse:
+    if not uid:
+        raise UidInvalideException(f"UID invalide fourni : '{uid}'")
+    
     organe: Organe = recuperer_organe(uid)
     
     return OrganeReponse.model_validate(

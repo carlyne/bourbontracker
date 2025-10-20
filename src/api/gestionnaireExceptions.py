@@ -2,10 +2,10 @@ from http import HTTPStatus
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from src.metier.applicationExceptions import (
-    ActeurIntrouvableException,
-    DocumentIntrouvableException,
-    OrganeIntrouvableException,
+from src.api.apiExceptions import UidInvalideException
+from src.metier.metierExceptions import (
+    DonnéeIntrouvableException,
+    RecupererDonnéeException
 )
 from src.infra.infrastructureException import (
     LectureException, 
@@ -19,11 +19,11 @@ class GestionnaireException:
     """
     def __init__(self):
         self._correspondances_entre_exception_et_code_réponse = {
-            DocumentIntrouvableException: HTTPStatus.NOT_FOUND,
-            ActeurIntrouvableException: HTTPStatus.NOT_FOUND,
-            OrganeIntrouvableException: HTTPStatus.NOT_FOUND,
-            MiseAJourStockException: HTTPStatus.INTERNAL_SERVER_ERROR,
+            UidInvalideException: HTTPStatus.BAD_REQUEST,
+            RecupererDonnéeException: HTTPStatus.INTERNAL_SERVER_ERROR,
             LectureException: HTTPStatus.INTERNAL_SERVER_ERROR,
+            MiseAJourStockException: HTTPStatus.INTERNAL_SERVER_ERROR,
+            DonnéeIntrouvableException: HTTPStatus.NOT_FOUND,
             Exception: HTTPStatus.INTERNAL_SERVER_ERROR,
         }
        
