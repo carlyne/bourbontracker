@@ -8,6 +8,7 @@ from typing import (
 
 from src.metier.organe.organe import Organe
 from src.infra.acteur.rechercherActeur import RechercherActeurEnBase
+from src.infra.acteur.rechercherActeurv2 import RechercherActeurEnBaseV2
 from src.metier.metierExceptions import (
     DonnéeIntrouvableException, 
     RecupererDonnéeException
@@ -41,29 +42,28 @@ from src.infra.models import (
 logger = logging.getLogger(__name__)
 
 
-def _construire_etat_civil(acteur: ActeurModel) -> Optional[EtatCivil]:
-    ident = Ident(civ=acteur.civilite, prenom=acteur.prenom, nom=acteur.nom)
+def _construire_etat_civil(acteur_model: ActeurModel) -> Optional[EtatCivil]:
+    ident = Ident(civ=acteur_model.civilite, prenom=acteur_model.prenom, nom=acteur_model.nom)
     if not any((ident.civ, ident.prenom, ident.nom)):
         ident = None
 
     info_naissance = InfoNaissance(
-        dateNais=acteur.date_naissance,
-        villeNais=acteur.ville_naissance,
-        depNais=acteur.departement_naissance,
-        paysNais=acteur.pays_naissance,
+        dateNais=acteur_model.date_naissance,
+        villeNais=acteur_model.ville_naissance,
+        depNais=acteur_model.departement_naissance,
+        paysNais=acteur_model.pays_naissance,
     )
-    if not any((
-        info_naissance.dateNais,
-        info_naissance.villeNais,
-        info_naissance.depNais,
-        info_naissance.paysNais,
-    )):
+    if not any((info_naissance.dateNais, info_naissance.villeNais, info_naissance.depNais, info_naissance.paysNais)):
         info_naissance = None
 
     if ident is None and info_naissance is None:
         return None
 
-    return EtatCivil(ident=ident, infoNaissance=info_naissance)
+    try:
+        return EtatCivil.model_validate({"ident": ident, "infoNaissance": info_naissance})
+    except Exception as e:
+        logger.error("Erreur validation EtatCivil pour acteur %s : %s", acteur_model.uid, e)
+        return None
 
 
 def _construire_profession(acteur: ActeurModel) -> Optional[Profession]:
@@ -216,17 +216,13 @@ def _enrichir_mandats_avec_detail_organe(
     mandats: List[Mandat],
     organes_models: List[OrganeModel]
 ) -> List[Mandat]:
-    organes_model_map: Dict[str, Organe] = {
-        organe_model.uid: organe_model # FIXME
-        for organe_model in organes_models
-        if organe_model.uid
-    }
-
+    
+    organes_map = {organe_model.uid: Organe.model_validate(organe_model, from_attributes=True) for organe_model in organes_models if organe_model.uid}
     mandats_enrichis: List[Mandat] = []
 
     for mandat in mandats:
         if mandat.organes and mandat.organes.organeRef:
-            detail = organes_model_map.get(mandat.organes.organeRef)
+            detail = organes_map.get(mandat.organes.organeRef)
             if detail:
                 mandat = mandat.model_copy(update={"organes": mandat.organes.model_copy(update={"detail": detail})})
         mandats_enrichis.append(mandat)
@@ -273,10 +269,7 @@ def recuperer_acteur(
         raise DonnéeIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
 
     try:
-        acteur = _parser_en_objet_metier(
-            acteur_model, 
-            organes_model
-        )
+        acteur: Acteur = Acteur.model_validate(acteur_model, from_attributes=True)
 
         mandats_initials: List[Mandat] = acteur.mandats.mandat if acteur.mandats else []
 
@@ -298,3 +291,20 @@ def recuperer_acteur(
     except Exception as e:
         logger.error("Erreur de validation pour l’acteur uid '%s'. Cause :  %s", uid, e)
         raise RecupererDonnéeException(f"Acteur invalide pour uid '{uid}'") from e
+    
+def recuperer_acteur_v2(
+    uid: str,
+    legislature: Optional[str] = None,
+    type_organe: Optional[str] = None
+):
+    try:
+        repository = RechercherActeurEnBaseV2()
+        acteur = repository.recherche_par_uid(uid, legislature, type_organe)
+
+        if acteur is None:
+            raise DonnéeIntrouvableException(f"Acteur introuvable pour uid='{uid}'")
+        return acteur
+    except Exception as e:
+        logger.error("Erreur de validation pour l’acteur uid '%s'. Cause :  %s", uid, e)
+        raise RecupererDonnéeException(f"Acteur invalide pour uid '{uid}'") from e
+

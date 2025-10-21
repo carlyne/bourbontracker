@@ -1,14 +1,39 @@
 from __future__ import annotations
 
 from typing import Any
-from datetime import date, datetime
-from sqlalchemy import text, Index, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlalchemy.types import Date, DateTime, Integer, String, Text
+from datetime import (
+    date, 
+    datetime
+)
+from sqlalchemy import (
+    text, 
+    Index, 
+    ForeignKey
+)
+from sqlalchemy.orm import (
+    DeclarativeBase, 
+    Mapped, 
+    mapped_column, 
+    relationship
+)
+from sqlalchemy.dialects.postgresql import (
+    ARRAY, 
+    JSONB
+)
+from sqlalchemy.types import (
+    Date, 
+    DateTime, 
+    Integer, 
+    String, 
+    Text
+)
+
 
 class Models(DeclarativeBase):
     pass
+
+
+# Organe
 
 class OrganeModel(Models):
     __tablename__ = "organe"
@@ -68,6 +93,9 @@ class OrganeModel(Models):
             "dateFin": self.vimode_date_fin,
         }
     
+    
+# Acteur
+    
 class ActeurModel(Models):
     __tablename__ = "acteur"
 
@@ -100,7 +128,6 @@ class ActeurModel(Models):
         Index("ix_acteur_nom", "nom"),
         Index("ix_acteur_prenom", "prenom"),
     )
-
 
 class MandatModel(Models):
     __tablename__ = "mandat"
@@ -155,7 +182,6 @@ class MandatModel(Models):
         Index("ix_mandat_legislature", "legislature"),
     )
 
-
 class CollaborateurModel(Models):
     __tablename__ = "collaborateur"
 
@@ -171,7 +197,6 @@ class CollaborateurModel(Models):
 
     mandat: Mapped[MandatModel] = relationship(back_populates="collaborateurs")
 
-
 class SuppleantModel(Models):
     __tablename__ = "suppleant"
 
@@ -184,6 +209,9 @@ class SuppleantModel(Models):
     suppleant_uid: Mapped[str | None] = mapped_column(String(255))
 
     mandat: Mapped[MandatModel] = relationship(back_populates="suppleants")
+
+
+# Document
 
 class DocumentModel(Models):
     __tablename__ = "document"

@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Dict, Optional, List
+from typing import (
+    Any, 
+    Dict, 
+    Optional, 
+    List
+)
 from pydantic import (
     BaseModel,
     Field,
@@ -9,6 +14,7 @@ from pydantic import (
     HttpUrl,
     field_validator,
     FieldValidationInfo,
+    model_validator,
 )
 
 from src.metier.organe.organe import Organe
@@ -17,7 +23,17 @@ from src.metier import _utilitaire
 
 class Uid(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
     text: str = Field(alias="#text")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_str_to_alias_dict(cls, v):
+        if isinstance(v, str):
+            return {"#text": v}
+        if isinstance(v, dict) and "text" in v and "#text" not in v:
+            return {"#text": v["text"]}
+        return v
 
 
 class Ident(BaseModel):
