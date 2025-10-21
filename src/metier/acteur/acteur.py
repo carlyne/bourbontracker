@@ -217,7 +217,11 @@ class Organes(BaseModel):
 
 
 class Mandat(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    model_config = ConfigDict(
+        populate_by_name=True, 
+        extra="ignore", 
+        from_attributes=True
+    )
 
     uid: Optional[str] = None
     acteurRef: Optional[str] = None
@@ -260,17 +264,33 @@ class Mandat(BaseModel):
 
 
 class Mandats(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    model_config = ConfigDict(
+        populate_by_name=True,
+         extra="ignore", 
+        from_attributes=True
+    )
+
     mandat: List[Mandat] = Field(default_factory=list)
 
-    @field_validator("mandat", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def _coerce_list(cls, v):
-        return _utilitaire.transformer_en_liste(v)
+    def _normalize_input(cls, v):
+        if v is None:
+            return {"mandat": []}
+        if isinstance(v, dict):
+            return v
+        try:
+            return {"mandat": [x for x in v if x is not None]}
+        except TypeError:
+            return {"mandat": [v]}
 
 
 class Acteur(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    model_config = ConfigDict(
+        populate_by_name=True, 
+        extra="ignore", 
+        from_attributes=True
+    )
 
     uid: Uid
     etatCivil: Optional[EtatCivil] = None
