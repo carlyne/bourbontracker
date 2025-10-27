@@ -7,11 +7,7 @@ import tempfile
 import os
 
 from pathlib import Path
-from typing import BinaryIO, Iterable, Iterator, Mapping, Type
-from sqlalchemy.orm import DeclarativeMeta, Session as SASession
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy import func
-from sqlalchemy.exc import SQLAlchemyError
+from typing import BinaryIO, Iterator
 
 from src.infra.baseConnexionBdd import BaseConnexionBdd
 from src.infra.infrastructureException import MiseAJourStockException

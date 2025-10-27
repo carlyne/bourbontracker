@@ -1,34 +1,27 @@
 import logging
-from typing import Optional
 
-from src.infra.models import OrganeModel
+from src.infra.infrastructureException import LectureException
 from src.metier.organe.organe import Organe
-from src.infra.organe.rechercherOrganeEnBase import RechercherOrganeEnBase
-from src.metier.metierExceptions import (
-    RecupererDonnéeException, 
-    DonnéeIntrouvableException
-)
+from src.infra.organe.rechercherSourceOrgane import RechercherSourceOrgane
+from src.metier.metierExceptions import RecupererDonnéeException, DonnéeIntrouvableException
 
 
 logger = logging.getLogger(__name__)
 
-    
-def _parser_en_objet_metier(
-        organe_model: OrganeModel, 
-        uid: str
-) -> Organe:
-    try:
-        return Organe.model_validate(organe_model)
-    except Exception as e:
-        logger.error("Erreur de validation pour l'organe avec uid '%s'. Cause : %s", uid, e)
-        raise RecupererDonnéeException(f"Organe invalide pour uid '{uid}'") from e
-    
 
 def recuperer_organe(uid: str) -> Organe:
-    rechercher_organe_en_base = RechercherOrganeEnBase()
-    organe_model: Optional[OrganeModel] = rechercher_organe_en_base.recherche_par_uid(uid)
+    rechercher_source_organe = RechercherSourceOrgane()
 
-    if organe_model is None:
-        raise DonnéeIntrouvableException(f"Aucun Organe trouvé pour l'uid '{uid}'")
+    try:
+        logger.debug("Récupération de l'organe '%s'", uid)
+
+        organe = rechercher_source_organe.recherche_par_uid(uid)
+
+    except LectureException as e:
+        raise RecupererDonnéeException(f"L'organe '{uid}' n'a pas pu être récupéré en base") from e
+
+    if organe is None:
+        logger.warning("L'organe '%s' n'existe pas", uid)
+        raise DonnéeIntrouvableException(f"L'organe '{uid}' n'existe pas")
     
-    return _parser_en_objet_metier(organe_model, uid)
+    return organe

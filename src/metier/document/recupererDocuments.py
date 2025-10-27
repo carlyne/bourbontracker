@@ -2,7 +2,7 @@ from typing import Dict, Iterable, List, Set, Optional
 
 from src.metier.acteur.recupererActeur import recuperer_acteur
 from src.metier.metierExceptions import DonnéeIntrouvableException
-from src.metier.acteur.recupererActeur import _parser_en_objet_metier
+from src.metier.acteur.recupererActeur import recuperer_acteur
 from src.metier.document.document import (
     Acteur as DocumentActeur,
     Auteur,
@@ -216,7 +216,7 @@ def _convertir_acteur(acteur: Optional[ActeurModel]):
         return None
 
     organes = _collecter_organes_associes(acteur)
-    return _parser_en_objet_metier(acteur, organes)
+    return recuperer_acteur()
 
 
 def _collecter_organes_associes(acteur: ActeurModel) -> List[OrganeModel]:

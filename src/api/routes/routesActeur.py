@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Query, status
+from fastapi import (
+    APIRouter, 
+    Query, 
+    status
+)
 
 from src.api.schemas.acteurReponse import ActeurReponse
 from src.metier.acteur.acteur import Acteur
 from src.metier.acteur.enregistrerActeurs import créer_ou_raffraichir_données_acteurs
-from src.metier.acteur.recupererActeur import (
-    recuperer_acteur, 
-    recuperer_acteur_v2
-)
+from src.metier.acteur.recupererActeur import recuperer_acteur
+
 
 router = APIRouter(prefix="/v1/acteurs", tags=["acteurs"])
 
@@ -39,7 +41,7 @@ def retourne_acteur(
         description="Type d'organe auquel l'acteur appartient (ex: 'GP' pour 'Groupe Politique')."
     )
 ) -> ActeurReponse:
-    acteur: Acteur = recuperer_acteur_v2(
+    acteur: Acteur = recuperer_acteur(
         uid, 
         legislature, 
         type_organe
