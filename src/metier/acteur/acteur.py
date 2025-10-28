@@ -124,6 +124,7 @@ class Profession(BaseModel):
 
 class Lieu(BaseModel):
     model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    
     region: Optional[str] = None
     regionType: Optional[str] = None
     departement: Optional[str] = None
