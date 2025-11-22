@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 
 from src.api.schemas.documentReponse import DocumentReponse
 from src.metier.document.document import Document
@@ -16,33 +16,20 @@ router = APIRouter(prefix="/v1/documents", tags=["documents"])
     response_model=list[DocumentReponse],
     response_model_exclude_none=True,
     status_code=status.HTTP_200_OK,
-    summary="Récupère les documents de la semaine courante",
+    summary="Récupère les documents de la semaine courante ou filtrés par type d'organe",
     responses={
         200: {"description": "Liste de documents retournée"},
         500: {"description": "Erreur interne serveur"}
     }
 )
-def retourne_documents() -> list[DocumentReponse]:
-    documents: list[Document] = recuperer_documents_semaine_courante()
-    return [
-        DocumentReponse.model_validate(document.model_dump(mode="python", by_alias=True))
-        for document in documents
-    ]
+def retourne_documents(typeorgane: str | None = Query(default=None, description="Type d'organe")) -> list[DocumentReponse]:
+    documents: list[Document]
 
+    if typeorgane:
+        documents = recuperer_documents_par_type_organe(typeorgane)
+    else:
+        documents = recuperer_documents_semaine_courante()
 
-@router.get(
-    "/type-organe/{type_organe}",
-    response_model=list[DocumentReponse],
-    response_model_exclude_none=True,
-    status_code=status.HTTP_200_OK,
-    summary="Récupère les documents associés à un type d'organe",
-    responses={
-        200: {"description": "Liste de documents retournée"},
-        500: {"description": "Erreur interne serveur"}
-    }
-)
-def retourne_documents_par_type_organe(type_organe: str) -> list[DocumentReponse]:
-    documents: list[Document] = recuperer_documents_par_type_organe(type_organe)
     return [
         DocumentReponse.model_validate(document.model_dump(mode="python", by_alias=True))
         for document in documents
