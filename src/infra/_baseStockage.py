@@ -76,8 +76,10 @@ class _BaseStockage(BaseConnexionBdd):
             return self._dezipper_fichiers()
         except Exception as e:
             logger.error("Erreur lors de la mise à jour des données : %s", e, exc_info=True)
-            raise MiseAJourStockException("Impossible de récupérer les données à jour du dossier %s", self.dossier_dezippé) from e
-
+            message = ( f"Impossible de récupérer les données à jour du dossier {self.dossier_dezippé} : {e}")
+            
+            raise MiseAJourStockException(message) from e
+        
     def _telecharger_dossier_zip(self):
         self.chemin_zip.parent.mkdir(parents=True, exist_ok=True)
 

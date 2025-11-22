@@ -1,0 +1,15 @@
+meta {
+  name: récupérer documents par type organe
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/v1/documents?typeorgane=GP
+  body: none
+  auth: none
+}
+
+query {
+  typeorgane: GP
+}
