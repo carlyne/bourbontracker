@@ -24,5 +24,18 @@ def recuperer_documents_semaine_courante() -> List[Document]:
     if not documents:
         logger.warning("Pas de document sur la semaine courante")
         raise DonnéeIntrouvableException(f"Pas de document sur la semaine courante")
-    
+
     return documents
+
+
+def recuperer_documents_par_type_organe(type_organe: str) -> List[Document]:
+    rechercher_source_documents = RechercherSourceDocuments()
+
+    try:
+        logger.debug("Récupération des documents pour le type d'organe : %s", type_organe)
+        return rechercher_source_documents.recherche_par_type_organe(type_organe)
+
+    except LectureException as e:
+        raise RecupererDonnéeException(
+            "Les documents pour ce type d'organe n'ont pas pu être récupérés"
+        ) from e
