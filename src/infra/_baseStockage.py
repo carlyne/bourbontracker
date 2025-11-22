@@ -1,6 +1,7 @@
 import shutil
 import zipfile
 import requests
+import time
 import logging
 import json
 import tempfile
@@ -123,12 +124,39 @@ class _BaseStockage(BaseConnexionBdd):
         return chemin_temporaire
 
     def _executer_requete_telechargement_dossier_zip(self, tmp: BinaryIO):
-        with requests.get(self.url, stream=True, timeout=(5, 30)) as reponse:
-            logger.debug("Requête de téléchargement du dossier '.zip' %s : %s %s", self.nom_dossier, reponse.request.method, reponse.url)
-            reponse.raise_for_status()
-            for chunk in reponse.iter_content(chunk_size=256 * 1024):
-                if chunk:
-                    tmp.write(chunk)
+        max_retries = 3
+        for tentative in range(1, max_retries + 1):
+            try:
+                with requests.get(self.url, stream=True, timeout=(5, 30)) as reponse:
+                    logger.debug(
+                        "Requête de téléchargement du dossier '.zip' %s : %s %s (tentative %s/%s)",
+                        self.nom_dossier,
+                        reponse.request.method,
+                        reponse.url,
+                        tentative,
+                        max_retries,
+                    )
+                    reponse.raise_for_status()
+                    for chunk in reponse.iter_content(chunk_size=256 * 1024):
+                        if chunk:
+                            tmp.write(chunk)
+                    tmp.flush()
+                    os.fsync(tmp.fileno())
+                    return
+            except (requests.exceptions.ChunkedEncodingError, requests.exceptions.ConnectionError, requests.exceptions.Timeout) as exc:
+                logger.warning(
+                    "Echec du téléchargement du dossier '.zip' %s (tentative %s/%s) : %s",
+                    self.nom_dossier,
+                    tentative,
+                    max_retries,
+                    exc,
+                )
+                tmp.seek(0)
+                tmp.truncate()
+                if tentative < max_retries:
+                    time.sleep(2 ** tentative)
+                    continue
+                raise
     
     def _itérer_dans_le_dossier_dezippé(self) -> Iterator[Path] :
         if not self.dossier_dezippé.exists():
