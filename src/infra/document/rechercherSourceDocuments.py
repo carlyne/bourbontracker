@@ -216,6 +216,19 @@ class RechercherSourceDocuments(BaseConnexionBdd):
             from_attributes=False
         )
 
+    def _options_recherche_auteurs(self):
+        return [
+            selectinload(DocumentModel.auteurs).options(
+                joinedload(DocumentActeurModel.acteur).options(
+                    selectinload(ActeurModel.mandats).options(
+                        joinedload(MandatModel.organe),
+                        selectinload(MandatModel.collaborateurs),
+                        selectinload(MandatModel.suppleants)
+                    )
+                )
+            )
+        ]
+
 
     def recherche_sur_semaine_courante(self) -> List[Document]:
         date_du_jour = func.current_date()
@@ -233,22 +246,10 @@ class RechercherSourceDocuments(BaseConnexionBdd):
             func.date(DocumentModel.date_publication_web).between(six_jours_plus_tôt, date_du_jour),
         )
 
-        options_recherche = [
-            selectinload(DocumentModel.auteurs).options(
-                joinedload(DocumentActeurModel.acteur).options(
-                    selectinload(ActeurModel.mandats).options(
-                        joinedload(MandatModel.organe),
-                        selectinload(MandatModel.collaborateurs),
-                        selectinload(MandatModel.suppleants)
-                    )
-                )
-            )
-        ]
-
         requête = (
             select(DocumentModel)
             .where(filtrage_par_date)
-            .options(*options_recherche)
+            .options(*self._options_recherche_auteurs())
             .order_by(DocumentModel.date_publication.desc().nullslast())
         )
 
@@ -263,3 +264,33 @@ class RechercherSourceDocuments(BaseConnexionBdd):
         except Exception as e:
             logger.exception("Erreur inattendue lors de la lecture des documents: %s", e)
             raise LectureException("Erreur lors de la lecture des documents") from e
+        
+    def recherche_par_type_organe(self, type_organe: str) -> List[Document]:
+        logger.debug("Requête documents par type d'organe : '%s'", type_organe)
+
+        requête = (
+            select(DocumentModel)
+            .join(
+                OrganeModel,
+                DocumentModel.organes_referents.any(OrganeModel.uid)
+            )
+            .where(OrganeModel.code_type == type_organe)
+            .options(*self._options_recherche_auteurs())
+            .order_by(DocumentModel.date_publication.desc().nullslast())
+        )
+
+        try:
+            with self.ouvrir_session() as session:
+                documents_models: List[DocumentModel] = (
+                    session.execute(requête).scalars().unique().all()
+                )
+
+            return [self._parser_vers_document(document_model) for document_model in documents_models]
+
+        except Exception as e:
+            logger.exception(
+                "Erreur inattendue lors de la lecture des documents pour le type d'organe %s: %s",
+                type_organe,
+                e
+            )
+            raise LectureException("Erreur lors de la lecture des documents par type d'organe") from e
